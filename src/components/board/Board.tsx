@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -107,6 +107,24 @@ export function Board() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);
 
+  const ZOOM_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+  const [zoom, setZoom] = useState(0.8);
+  const zoomIn    = useCallback(() => setZoom(z => ZOOM_STEPS[Math.min(ZOOM_STEPS.indexOf(z) + 1, ZOOM_STEPS.length - 1)]), []);
+  const zoomOut   = useCallback(() => setZoom(z => ZOOM_STEPS[Math.max(ZOOM_STEPS.indexOf(z) - 1, 0)]), []);
+  const zoomReset = useCallback(() => setZoom(1.0), []);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn(); }
+      if (e.key === '-')                  { e.preventDefault(); zoomOut(); }
+      if (e.key === '0')                  { e.preventDefault(); zoomReset(); }
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [zoomIn, zoomOut, zoomReset]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -184,10 +202,10 @@ export function Board() {
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="min-h-screen bg-[#1d2125] flex flex-col">
-          <BoardHeader />
+          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />
 
           <div className="flex-1 overflow-x-auto">
-            <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content' }}>
+            <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }}>
               {STAGES.map((stage) => {
                 const stageLoans = loans.filter(
                   (l) => (stageOverrides.get(l.id) ?? l.stageId) === stage.id
