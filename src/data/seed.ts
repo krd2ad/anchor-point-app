@@ -232,6 +232,9 @@ export const SEED_LOANS: Loan[] = [
     paymentDueDay: 1,
     autoPayEnabled: false,
     displayLabel: 'OH9 Holdings LLC – 1923 County Rd 202, Caldwell TX',
+    hasDrawProgram: true,
+    loanPosition: 'First Lien',
+    referralPartner: 'Southwest Capital Partners',
     createdAt: '2024-07-20T08:00:00.000Z',
     updatedAt: '2025-05-15T09:00:00.000Z',
   },
@@ -314,7 +317,12 @@ export const SEED_STEP_STATUSES: LoanStepStatus[] = [
   { id: 'ss-1-s1-3', loanId: 'loan-1', stepId: 's1-3', status: 'not_done', completedBy: null,     completedAt: null },
   { id: 'ss-1-s1-4', loanId: 'loan-1', stepId: 's1-4', status: 'not_done', completedBy: null,     completedAt: null },
 
-  // ── loan-2 (stage-3, 9 steps) — first 2 done ─────────────────────────────
+  // ── loan-2 (stage-3) — stage-2 complete, stage-3 in progress ────────────────
+  { id: 'ss-2-s2-1', loanId: 'loan-2', stepId: 's2-1', status: 'done', completedBy: 'user-2', completedAt: '2025-04-12T10:00:00.000Z' },
+  { id: 'ss-2-s2-2', loanId: 'loan-2', stepId: 's2-2', status: 'done', completedBy: 'user-1', completedAt: '2025-04-15T10:00:00.000Z' },
+  { id: 'ss-2-s2-3', loanId: 'loan-2', stepId: 's2-3', status: 'done', completedBy: 'user-2', completedAt: '2025-04-16T10:00:00.000Z' },
+
+  // ── loan-2 (stage-3, now 10 steps) — first 2 done ────────────────────────
   { id: 'ss-2-s3-1', loanId: 'loan-2', stepId: 's3-1', status: 'done',     completedBy: 'user-2', completedAt: '2025-04-18T10:00:00.000Z' },
   { id: 'ss-2-s3-2', loanId: 'loan-2', stepId: 's3-2', status: 'done',     completedBy: 'user-1', completedAt: '2025-04-25T14:00:00.000Z' },
   { id: 'ss-2-s3-3', loanId: 'loan-2', stepId: 's3-3', status: 'not_done', completedBy: null,     completedAt: null },
@@ -323,9 +331,15 @@ export const SEED_STEP_STATUSES: LoanStepStatus[] = [
   { id: 'ss-2-s3-6', loanId: 'loan-2', stepId: 's3-6', status: 'not_done', completedBy: null,     completedAt: null },
   { id: 'ss-2-s3-7', loanId: 'loan-2', stepId: 's3-7', status: 'not_done', completedBy: null,     completedAt: null },
   { id: 'ss-2-s3-8', loanId: 'loan-2', stepId: 's3-8', status: 'not_done', completedBy: null,     completedAt: null },
-  { id: 'ss-2-s3-9', loanId: 'loan-2', stepId: 's3-9', status: 'not_done', completedBy: null,     completedAt: null },
+  { id: 'ss-2-s3-9',  loanId: 'loan-2', stepId: 's3-9',  status: 'not_done', completedBy: null, completedAt: null },
+  { id: 'ss-2-s3-10', loanId: 'loan-2', stepId: 's3-10', status: 'not_done', completedBy: null, completedAt: null },
 
-  // ── loan-3 (stage-3, 9 steps) — first 2 done ─────────────────────────────
+  // ── loan-3 (stage-3) — stage-2 complete, stage-3 in progress ────────────────
+  { id: 'ss-3-s2-1', loanId: 'loan-3', stepId: 's2-1', status: 'done', completedBy: 'user-2', completedAt: '2025-04-17T10:00:00.000Z' },
+  { id: 'ss-3-s2-2', loanId: 'loan-3', stepId: 's2-2', status: 'done', completedBy: 'user-1', completedAt: '2025-04-18T10:00:00.000Z' },
+  { id: 'ss-3-s2-3', loanId: 'loan-3', stepId: 's2-3', status: 'done', completedBy: 'user-3', completedAt: '2025-04-19T10:00:00.000Z' },
+
+  // ── loan-3 (stage-3, now 10 steps) — first 2 done ────────────────────────
   { id: 'ss-3-s3-1', loanId: 'loan-3', stepId: 's3-1', status: 'done',     completedBy: 'user-3', completedAt: '2025-04-20T09:00:00.000Z' },
   { id: 'ss-3-s3-2', loanId: 'loan-3', stepId: 's3-2', status: 'done',     completedBy: 'user-1', completedAt: '2025-04-28T11:00:00.000Z' },
   { id: 'ss-3-s3-3', loanId: 'loan-3', stepId: 's3-3', status: 'not_done', completedBy: null,     completedAt: null },
@@ -334,19 +348,42 @@ export const SEED_STEP_STATUSES: LoanStepStatus[] = [
   { id: 'ss-3-s3-6', loanId: 'loan-3', stepId: 's3-6', status: 'not_done', completedBy: null,     completedAt: null },
   { id: 'ss-3-s3-7', loanId: 'loan-3', stepId: 's3-7', status: 'not_done', completedBy: null,     completedAt: null },
   { id: 'ss-3-s3-8', loanId: 'loan-3', stepId: 's3-8', status: 'not_done', completedBy: null,     completedAt: null },
-  { id: 'ss-3-s3-9', loanId: 'loan-3', stepId: 's3-9', status: 'not_done', completedBy: null,     completedAt: null },
+  { id: 'ss-3-s3-9',  loanId: 'loan-3', stepId: 's3-9',  status: 'not_done', completedBy: null, completedAt: null },
+  { id: 'ss-3-s3-10', loanId: 'loan-3', stepId: 's3-10', status: 'not_done', completedBy: null, completedAt: null },
 
-  // ── loan-4 (stage-6, 4 steps) — most done ────────────────────────────────
-  { id: 'ss-4-s6-1', loanId: 'loan-4', stepId: 's6-1', status: 'done',     completedBy: 'user-1', completedAt: '2024-10-05T10:00:00.000Z' },
-  { id: 'ss-4-s6-2', loanId: 'loan-4', stepId: 's6-2', status: 'done',     completedBy: 'user-1', completedAt: '2024-11-01T10:00:00.000Z' },
-  { id: 'ss-4-s6-3', loanId: 'loan-4', stepId: 's6-3', status: 'done',     completedBy: 'user-2', completedAt: '2024-12-05T10:00:00.000Z' },
-  { id: 'ss-4-s6-4', loanId: 'loan-4', stepId: 's6-4', status: 'not_done', completedBy: null,     completedAt: null },
+  // ── loan-4 (stage-6) — OH9 Holdings, delinquent + has draw program ──────────
+  // Stages 1-5 all complete (funded, servicing set up, was collecting)
+  { id: 'ss-4-s1-1', loanId: 'loan-4', stepId: 's1-1', status: 'done', completedBy: 'user-1', completedAt: '2024-07-22T10:00:00.000Z' },
+  { id: 'ss-4-s1-2', loanId: 'loan-4', stepId: 's1-2', status: 'done', completedBy: 'user-1', completedAt: '2024-07-24T10:00:00.000Z' },
+  { id: 'ss-4-s1-3', loanId: 'loan-4', stepId: 's1-3', status: 'done', completedBy: 'user-1', completedAt: '2024-07-25T10:00:00.000Z' },
+  { id: 'ss-4-s1-4', loanId: 'loan-4', stepId: 's1-4', status: 'done', completedBy: 'user-2', completedAt: '2024-07-26T10:00:00.000Z' },
+  { id: 'ss-4-s3-1', loanId: 'loan-4', stepId: 's3-1', status: 'done', completedBy: 'user-2', completedAt: '2024-08-01T10:00:00.000Z' },
+  { id: 'ss-4-s3-2', loanId: 'loan-4', stepId: 's3-2', status: 'done', completedBy: 'user-2', completedAt: '2024-08-05T10:00:00.000Z' },
+  { id: 'ss-4-s3-3', loanId: 'loan-4', stepId: 's3-3', status: 'done', completedBy: 'user-2', completedAt: '2024-08-07T10:00:00.000Z' },
+  { id: 'ss-4-s3-4', loanId: 'loan-4', stepId: 's3-4', status: 'done', completedBy: 'user-1', completedAt: '2024-08-08T10:00:00.000Z' },
+  { id: 'ss-4-s3-5', loanId: 'loan-4', stepId: 's3-5', status: 'done', completedBy: 'user-2', completedAt: '2024-08-09T10:00:00.000Z' },
+  { id: 'ss-4-s3-6', loanId: 'loan-4', stepId: 's3-6', status: 'done', completedBy: 'user-1', completedAt: '2024-08-10T10:00:00.000Z' },
+  { id: 'ss-4-s3-7', loanId: 'loan-4', stepId: 's3-7', status: 'done', completedBy: 'user-1', completedAt: '2024-08-14T10:00:00.000Z' },
+  { id: 'ss-4-s3-8', loanId: 'loan-4', stepId: 's3-8', status: 'done', completedBy: 'user-2', completedAt: '2024-08-16T10:00:00.000Z' },
+  { id: 'ss-4-s4-1', loanId: 'loan-4', stepId: 's4-1', status: 'done', completedBy: 'user-2', completedAt: '2024-08-18T10:00:00.000Z' },
+  { id: 'ss-4-s4-2', loanId: 'loan-4', stepId: 's4-2', status: 'done', completedBy: 'user-1', completedAt: '2024-08-20T10:00:00.000Z' },
+  { id: 'ss-4-s4-3', loanId: 'loan-4', stepId: 's4-3', status: 'done', completedBy: 'user-2', completedAt: '2024-08-25T10:00:00.000Z' },
+  { id: 'ss-4-s4-4', loanId: 'loan-4', stepId: 's4-4', status: 'done', completedBy: 'user-1', completedAt: '2024-08-26T10:00:00.000Z' },
+  { id: 'ss-4-s5-1', loanId: 'loan-4', stepId: 's5-1', status: 'done', completedBy: 'user-2', completedAt: '2024-09-01T10:00:00.000Z' },
+  { id: 'ss-4-s5-2', loanId: 'loan-4', stepId: 's5-2', status: 'done', completedBy: 'user-2', completedAt: '2024-09-01T10:00:00.000Z' },
+  { id: 'ss-4-s5-5', loanId: 'loan-4', stepId: 's5-5', status: 'done', completedBy: 'user-2', completedAt: '2024-09-15T10:00:00.000Z' },
+  // Now in Special Servicing
+  { id: 'ss-4-s6-1',  loanId: 'loan-4', stepId: 's6-1',  status: 'done',     completedBy: 'user-1', completedAt: '2024-10-05T10:00:00.000Z' },
+  { id: 'ss-4-s6-1t', loanId: 'loan-4', stepId: 's6-1t', status: 'done',     completedBy: 'user-2', completedAt: '2024-10-05T14:00:00.000Z' },
+  { id: 'ss-4-s6-2',  loanId: 'loan-4', stepId: 's6-2',  status: 'done',     completedBy: 'user-1', completedAt: '2024-11-01T10:00:00.000Z' },
+  { id: 'ss-4-s6-3',  loanId: 'loan-4', stepId: 's6-3',  status: 'done',     completedBy: 'user-2', completedAt: '2024-12-05T10:00:00.000Z' },
+  { id: 'ss-4-s6-d2a',loanId: 'loan-4', stepId: 's6-d2a',status: 'not_done', completedBy: null,     completedAt: null },
 
-  // ── loan-5 (stage-6, 4 steps) — most done ────────────────────────────────
-  { id: 'ss-5-s6-1', loanId: 'loan-5', stepId: 's6-1', status: 'done',     completedBy: 'user-1', completedAt: '2024-11-15T09:00:00.000Z' },
-  { id: 'ss-5-s6-2', loanId: 'loan-5', stepId: 's6-2', status: 'done',     completedBy: 'user-1', completedAt: '2024-12-10T09:00:00.000Z' },
-  { id: 'ss-5-s6-3', loanId: 'loan-5', stepId: 's6-3', status: 'not_done', completedBy: null,     completedAt: null },
-  { id: 'ss-5-s6-4', loanId: 'loan-5', stepId: 's6-4', status: 'not_done', completedBy: null,     completedAt: null },
+  // ── loan-5 (stage-6) — CR LJFB LLC, delinquent ───────────────────────────────
+  { id: 'ss-5-s6-1',  loanId: 'loan-5', stepId: 's6-1',  status: 'done',     completedBy: 'user-1', completedAt: '2024-11-15T09:00:00.000Z' },
+  { id: 'ss-5-s6-1t', loanId: 'loan-5', stepId: 's6-1t', status: 'done',     completedBy: 'user-2', completedAt: '2024-11-15T15:00:00.000Z' },
+  { id: 'ss-5-s6-2',  loanId: 'loan-5', stepId: 's6-2',  status: 'done',     completedBy: 'user-1', completedAt: '2024-12-10T09:00:00.000Z' },
+  { id: 'ss-5-s6-3',  loanId: 'loan-5', stepId: 's6-3',  status: 'not_done', completedBy: null,     completedAt: null },
 
   // ── loan-6 (stage-7, 3 steps) — most done ────────────────────────────────
   { id: 'ss-6-s7-1', loanId: 'loan-6', stepId: 's7-1', status: 'done',     completedBy: 'user-1', completedAt: '2025-01-10T08:00:00.000Z' },
