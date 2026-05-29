@@ -1,4 +1,4 @@
-// ─── Core entities ────────────────────────────────────────────────────────────
+// ─── Primitive unions ──────────────────────────────────────────────────────────
 
 export type LendingEntity = 'APL' | 'APG';
 export type BorrowerEntityType = 'LLC' | 'Individual' | 'Corp' | 'Trust';
@@ -8,12 +8,27 @@ export type AttachmentKind = 'ID' | 'Deed' | 'TermSheet' | 'Settlement' | 'Other
 export type AttachmentStatus = 'requested' | 'received' | 'verified';
 export type PaymentDueDay = 1 | 10 | 20;
 
+// ProcessStep metadata types (Phase 1+)
+export type OwnerRole =
+  | 'Originator' | 'Camila' | 'Rivers' | 'Sam'
+  | 'RiversOrSam' | 'Processor' | 'System';
+export type ActionType =
+  | 'gather' | 'email' | 'text' | 'approval'
+  | 'await_third_party' | 'file' | 'compute' | 'decision' | 'hold';
+export type StepSeverity = 'normal' | 'critical';
+export type SubWorkflow = 'draw' | 'extension';
+export type ExternalPartyType = 'servicer' | 'title' | 'law_firm' | 'inspector' | 'bank';
+
+// ─── Users ─────────────────────────────────────────────────────────────────────
+
 export interface User {
   id: string;
   initials: string;
   name: string;
   color: string;
 }
+
+// ─── Borrower / Principal / Parcel ────────────────────────────────────────────
 
 export interface BorrowerEntity {
   id: string;
@@ -43,10 +58,13 @@ export interface Parcel {
   valuation: number | null;
 }
 
+// ─── Loan ──────────────────────────────────────────────────────────────────────
+
 export interface Loan {
   id: string;
   stageId: string;
-  lendingEntity: LendingEntity;
+  lendingEntity: LendingEntity;           // preserved for existing data
+  internalLendingEntity?: LendingEntity;  // SOP clarification field
   borrowerEntityId: string;
   principalId: string;
   parcelIds: string[];
@@ -59,11 +77,19 @@ export interface Loan {
   fundedDate: string | null;
   firstPaymentDate: string | null;
   paymentDueDay: PaymentDueDay;
+  paymentDayOfMonth?: 1 | 10 | 20;       // SOP alias; aligns with NSC setup
   autoPayEnabled: boolean;
   displayLabel: string;
+  // SOP additions (all optional — existing seed data omits them)
+  referralPartner?: string;
+  loanPosition?: string;                  // e.g. "First Lien"
+  titleCompanyId?: string;                // → ExternalParty
+  hasDrawProgram?: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+// ─── Stage ─────────────────────────────────────────────────────────────────────
 
 export interface Stage {
   id: string;
@@ -72,12 +98,28 @@ export interface Stage {
   color: string;
 }
 
-export interface StageStep {
+// ─── ProcessStep (formerly StageStep) ─────────────────────────────────────────
+
+export interface ProcessStep {
   id: string;
   stageId: string;
   order: number;
   label: string;
+  // SOP metadata — all optional so existing seed data compiles unchanged
+  ownerRole?: OwnerRole;
+  actionType?: ActionType;
+  desiredOutcome?: string;
+  templateId?: string;                    // → MessageTemplate
+  externalPartyType?: ExternalPartyType;
+  severity?: StepSeverity;               // 'critical' = loud closing gate
+  ruleKey?: string;                       // → underwriting rule
+  subWorkflow?: SubWorkflow;
 }
+
+// Backward-compat alias — remove once all imports are updated
+export type StageStep = ProcessStep;
+
+// ─── LoanStepStatus ────────────────────────────────────────────────────────────
 
 export interface LoanStepStatus {
   id: string;
@@ -87,6 +129,8 @@ export interface LoanStepStatus {
   completedBy: string | null;
   completedAt: string | null;
 }
+
+// ─── Comment ───────────────────────────────────────────────────────────────────
 
 export interface Comment {
   id: string;
@@ -98,6 +142,8 @@ export interface Comment {
   createdAt: string;
 }
 
+// ─── Attachment ────────────────────────────────────────────────────────────────
+
 export interface Attachment {
   id: string;
   loanId: string;
@@ -106,7 +152,54 @@ export interface Attachment {
   status: AttachmentStatus;
 }
 
-// ─── Aggregate returned by getLoan ────────────────────────────────────────────
+// ─── MessageTemplate (Phase 3) ─────────────────────────────────────────────────
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  channel: 'email' | 'text';
+  subject?: string;
+  body: string;
+  mergeFields: string[];
+}
+
+// ─── ExternalParty (Phase 4) ───────────────────────────────────────────────────
+
+export interface ExternalParty {
+  id: string;
+  type: ExternalPartyType;
+  name: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+}
+
+// ─── UnderwritingScorecard (Phase 5) ──────────────────────────────────────────
+
+export type ScorecardDecision = 'Approved' | 'Suspended' | 'Denied' | null;
+
+export interface ScorecardRuleResult {
+  key: string;
+  label: string;
+  result: 'pass' | 'fail' | 'na';
+  detail?: string;
+}
+
+export interface UnderwritingScorecard {
+  loanId: string;
+  ltv: number | null;
+  ltc: number | null;
+  dscr: number | null;
+  debtYield: number | null;
+  liquidityOk: boolean | null;
+  equityOk: boolean | null;
+  anchorPointCount: number;
+  rules: ScorecardRuleResult[];
+  decision: ScorecardDecision;
+  deviations: string[];
+}
+
+// ─── LoanDetail aggregate ──────────────────────────────────────────────────────
 
 export interface LoanDetail {
   loan: Loan;

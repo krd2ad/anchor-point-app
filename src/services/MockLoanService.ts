@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid';
 import type { LoanService } from './LoanService';
 import type {
   Stage,
-  StageStep,
+  ProcessStep,
   Loan,
   LoanDetail,
   LoanStepStatus,
@@ -12,6 +12,9 @@ import type {
   Principal,
   Parcel,
   Attachment,
+  MessageTemplate,
+  ExternalParty,
+  UnderwritingScorecard,
 } from '../types';
 import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
@@ -51,7 +54,7 @@ export class MockLoanService implements LoanService {
     return Promise.resolve(STAGES);
   }
 
-  async getStageSteps(stageId: string): Promise<StageStep[]> {
+  async getStageSteps(stageId: string): Promise<ProcessStep[]> {
     return Promise.resolve(STAGE_STEPS.filter(s => s.stageId === stageId));
   }
 
@@ -156,5 +159,26 @@ export class MockLoanService implements LoanService {
     if (!comment) throw new Error(`Comment not found: ${commentId}`);
     comment.resolved = false;
     return Promise.resolve({ ...comment });
+  }
+
+  // ─── SOP additions — stubs filled in by later phases ─────────────────────────
+
+  async getMessageTemplates(): Promise<MessageTemplate[]> {
+    return Promise.resolve([]);
+  }
+
+  async getExternalParties(): Promise<ExternalParty[]> {
+    return Promise.resolve([]);
+  }
+
+  async getScorecard(_loanId: string): Promise<UnderwritingScorecard | null> {
+    return Promise.resolve(null);
+  }
+
+  async renderTemplate(
+    _templateId: string,
+    _loanId: string,
+  ): Promise<{ subject: string; body: string }> {
+    return Promise.resolve({ subject: '', body: '' });
   }
 }

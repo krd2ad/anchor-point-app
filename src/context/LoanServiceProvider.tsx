@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { LoanService } from '../services/LoanService';
-import type { Loan } from '../types';
+import type { Loan, MessageTemplate, ExternalParty, UnderwritingScorecard } from '../types';
 import { MockLoanService } from '../services/MockLoanService';
 
 // ─── Context shapes ────────────────────────────────────────────────────────────
@@ -84,4 +84,36 @@ export function useLoans(): LoansState {
 
 export function useSelectedLoan(): SelectedLoanState {
   return useContext(SelectedLoanContext);
+}
+
+// ─── SOP hooks (Phase 1+) ─────────────────────────────────────────────────────
+
+export function useMessageTemplates(): { templates: MessageTemplate[]; loading: boolean } {
+  const service = useLoanService();
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    service.getMessageTemplates().then((t) => { setTemplates(t); setLoading(false); });
+  }, [service]);
+  return { templates, loading };
+}
+
+export function useExternalParties(): { parties: ExternalParty[]; loading: boolean } {
+  const service = useLoanService();
+  const [parties, setParties] = useState<ExternalParty[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    service.getExternalParties().then((p) => { setParties(p); setLoading(false); });
+  }, [service]);
+  return { parties, loading };
+}
+
+export function useScorecard(loanId: string | null): UnderwritingScorecard | null {
+  const service = useLoanService();
+  const [scorecard, setScorecard] = useState<UnderwritingScorecard | null>(null);
+  useEffect(() => {
+    if (!loanId) { setScorecard(null); return; }
+    service.getScorecard(loanId).then(setScorecard);
+  }, [service, loanId]);
+  return scorecard;
 }
