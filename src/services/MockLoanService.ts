@@ -20,6 +20,7 @@ import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
 import { MESSAGE_TEMPLATES } from '../data/messageTemplates';
 import { EXTERNAL_PARTIES } from '../data/externalParties';
+import { buildScorecard, scorecardInputsForLoan } from '../lib/underwriting';
 import {
   SEED_LOANS,
   SEED_BORROWER_ENTITIES,
@@ -173,8 +174,14 @@ export class MockLoanService implements LoanService {
     return Promise.resolve(EXTERNAL_PARTIES);
   }
 
-  async getScorecard(_loanId: string): Promise<UnderwritingScorecard | null> {
-    return Promise.resolve(null);
+  async getScorecard(loanId: string): Promise<UnderwritingScorecard | null> {
+    const loan = this.loans.get(loanId);
+    if (!loan) return null;
+    const parcels = loan.parcelIds
+      .map(id => this.parcels.get(id))
+      .filter((p): p is NonNullable<typeof p> => p != null);
+    const inputs = scorecardInputsForLoan(loanId, loan.loanAmount, parcels, loan);
+    return buildScorecard(loanId, inputs);
   }
 
   async renderTemplate(
