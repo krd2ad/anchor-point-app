@@ -124,6 +124,10 @@ export function LoanDetailPanel() {
               loanId={loanDetail.loan.id}
               stageId={loanDetail.loan.stageId}
               isCurrentStage={true}
+              onStepStatusChanged={() => {
+                // Re-fetch comments so auto-logged "sent" comments appear immediately
+                service.getLoan(loanDetail.loan.id).then(d => setComments(d.comments));
+              }}
             />
 
             <Divider />
