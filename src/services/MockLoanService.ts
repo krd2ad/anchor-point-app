@@ -19,6 +19,7 @@ import type {
 import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
 import { MESSAGE_TEMPLATES } from '../data/messageTemplates';
+import { EXTERNAL_PARTIES } from '../data/externalParties';
 import {
   SEED_LOANS,
   SEED_BORROWER_ENTITIES,
@@ -169,7 +170,7 @@ export class MockLoanService implements LoanService {
   }
 
   async getExternalParties(): Promise<ExternalParty[]> {
-    return Promise.resolve([]);
+    return Promise.resolve(EXTERNAL_PARTIES);
   }
 
   async getScorecard(_loanId: string): Promise<UnderwritingScorecard | null> {
