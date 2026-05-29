@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/core';
 import type { Stage, Loan } from '../../types';
 import { LoanCard } from './LoanCard';
 
@@ -6,6 +7,7 @@ interface StageColumnProps {
   loans: Loan[];
   selectedLoanId: string | null;
   onSelectLoan: (id: string) => void;
+  activeId: string | null;
 }
 
 export function StageColumn({
@@ -13,9 +15,20 @@ export function StageColumn({
   loans,
   selectedLoanId,
   onSelectLoan,
+  activeId,
 }: StageColumnProps) {
+  const { isOver, setNodeRef } = useDroppable({ id: stage.id });
+
+  const isDraggingIntoThis = isOver && activeId !== null;
+
   return (
-    <div className="bg-[#282e33] min-w-[260px] max-w-[260px] rounded-lg mx-2 flex flex-col max-h-full">
+    <div
+      ref={setNodeRef}
+      className={`min-w-[260px] max-w-[260px] rounded-lg mx-2 flex flex-col transition-colors duration-150 ${
+        isDraggingIntoThis ? 'bg-[#2c3a47] ring-2 ring-inset ring-[#579dff]/40' : 'bg-[#282e33]'
+      }`}
+      style={{ maxHeight: 'calc(100vh - 64px)' }}
+    >
       {/* Column header */}
       <div
         className="px-3 py-2 flex items-center gap-2 flex-shrink-0 border-b border-[#454f59]"
@@ -37,7 +50,7 @@ export function StageColumn({
       </div>
 
       {/* Card list */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 overflow-y-auto px-2 py-2 min-h-[48px]">
         {loans.length === 0 ? (
           <p className="text-[#8c9bab] text-xs italic text-center mt-4">
             No loans
