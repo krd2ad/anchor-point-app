@@ -18,6 +18,7 @@ import type {
 } from '../types';
 import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
+import { MESSAGE_TEMPLATES } from '../data/messageTemplates';
 import {
   SEED_LOANS,
   SEED_BORROWER_ENTITIES,
@@ -164,7 +165,7 @@ export class MockLoanService implements LoanService {
   // ─── SOP additions — stubs filled in by later phases ─────────────────────────
 
   async getMessageTemplates(): Promise<MessageTemplate[]> {
-    return Promise.resolve([]);
+    return Promise.resolve(MESSAGE_TEMPLATES);
   }
 
   async getExternalParties(): Promise<ExternalParty[]> {
@@ -176,9 +177,38 @@ export class MockLoanService implements LoanService {
   }
 
   async renderTemplate(
-    _templateId: string,
-    _loanId: string,
+    templateId: string,
+    loanId: string,
   ): Promise<{ subject: string; body: string }> {
-    return Promise.resolve({ subject: '', body: '' });
+    const template = MESSAGE_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return { subject: '', body: '' };
+
+    const loan = this.loans.get(loanId);
+    const principal = loan ? this.principals.get(loan.principalId) : null;
+    const parcels = loan ? loan.parcelIds.map(id => this.parcels.get(id)).filter(Boolean) : [];
+    const firstParcel = parcels[0];
+
+    const mergeValues: Record<string, string> = {
+      'Borrower First Name': principal?.firstName ?? 'Borrower',
+      'Property Address': firstParcel
+        ? `${firstParcel.addressLine}, ${firstParcel.city} ${firstParcel.state}`
+        : '[Property Address]',
+      'Payment Day': loan?.paymentDueDay ? `the ${loan.paymentDueDay}${loan.paymentDueDay === 1 ? 'st' : loan.paymentDueDay === 10 ? 'th' : 'th'}` : '[Payment Day]',
+      'Law Firm Contact': '[Law Firm Contact]',
+      'Month Day, Year': '[Month Day, Year]',
+      'number': '[number]',
+      'Email Addresses': '[Email Addresses]',
+    };
+
+    let subject = template.subject ?? '';
+    let body = template.body;
+
+    for (const [field, value] of Object.entries(mergeValues)) {
+      const placeholder = `[${field}]`;
+      subject = subject.split(placeholder).join(value);
+      body = body.split(placeholder).join(value);
+    }
+
+    return { subject, body };
   }
 }
