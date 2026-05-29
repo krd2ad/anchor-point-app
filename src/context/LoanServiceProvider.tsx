@@ -4,11 +4,13 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
 import type { LoanService } from '../services/LoanService';
-import type { Loan, MessageTemplate, ExternalParty, UnderwritingScorecard } from '../types';
+import type { Loan, MessageTemplate, ExternalParty, UnderwritingScorecard, Attachment } from '../types';
 import { MockLoanService } from '../services/MockLoanService';
+import { buildFileTree, type FileTreeNode } from '../lib/fileTree';
 
 // ─── Context shapes ────────────────────────────────────────────────────────────
 
@@ -116,4 +118,52 @@ export function useScorecard(loanId: string | null): UnderwritingScorecard | nul
     service.getScorecard(loanId).then(setScorecard);
   }, [service, loanId]);
   return scorecard;
+}
+
+export interface FileTreeState {
+  tree: FileTreeNode[];
+  loading: boolean;
+  showEmptyCategories: boolean;
+  setShowEmptyCategories: (v: boolean) => void;
+  attachments: Attachment[];
+  addMockAttachment: (attachment: Attachment) => void;
+}
+
+export function useFileTree(options?: { showEmptyCategories?: boolean }): FileTreeState {
+  const service = useLoanService();
+  const { loans, loading: loansLoading } = useLoans();
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [showEmptyCategories, setShowEmptyCategories] = useState(
+    options?.showEmptyCategories ?? true
+  );
+
+  useEffect(() => {
+    setAttachmentsLoading(true);
+    service.getAllAttachments().then(data => {
+      setAttachments(data);
+      setAttachmentsLoading(false);
+    });
+  }, [service]);
+
+  const addMockAttachment = useCallback((attachment: Attachment) => {
+    setAttachments(prev => [...prev, attachment]);
+  }, []);
+
+  const tree = useMemo(
+    () =>
+      loansLoading || attachmentsLoading
+        ? []
+        : buildFileTree(loans, attachments, { showEmptyCategories }),
+    [loans, attachments, loansLoading, attachmentsLoading, showEmptyCategories],
+  );
+
+  return {
+    tree,
+    loading: loansLoading || attachmentsLoading,
+    showEmptyCategories,
+    setShowEmptyCategories,
+    attachments,
+    addMockAttachment,
+  };
 }

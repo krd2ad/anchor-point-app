@@ -5,7 +5,16 @@ export type BorrowerEntityType = 'LLC' | 'Individual' | 'Corp' | 'Trust';
 export type PropertyType = 'Land' | 'SFR' | 'Commercial' | 'Other';
 export type StepStatus = 'done' | 'not_done' | 'na';
 export type AttachmentKind = 'ID' | 'Deed' | 'TermSheet' | 'Settlement' | 'Other';
-export type AttachmentStatus = 'requested' | 'received' | 'verified';
+export type AttachmentStatus = 'requested' | 'received' | 'verified' | 'waived';
+export type AttachmentCategory =
+  | 'Underwriting'
+  | 'Loan Docs'
+  | 'Title'
+  | 'Final Loan Docs'
+  | 'NSC'
+  | 'Insurance'
+  | 'Draw';
+export type AttachmentFileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx' | 'other';
 export type PaymentDueDay = 1 | 10 | 20;
 
 // ProcessStep metadata types (Phase 1+)
@@ -150,6 +159,11 @@ export interface Attachment {
   name: string;
   kind: AttachmentKind;
   status: AttachmentStatus;
+  category: AttachmentCategory;
+  fileType: AttachmentFileType;
+  sizeBytes?: number;
+  uploadedAt?: string;
+  uploadedById?: string;
 }
 
 // ─── MessageTemplate (Phase 3) ─────────────────────────────────────────────────

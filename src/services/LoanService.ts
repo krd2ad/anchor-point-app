@@ -9,6 +9,7 @@ import type {
   MessageTemplate,
   ExternalParty,
   UnderwritingScorecard,
+  Attachment,
 } from '../types';
 
 export interface LoanService {
@@ -33,4 +34,8 @@ export interface LoanService {
   getExternalParties(): Promise<ExternalParty[]>;
   getScorecard(loanId: string): Promise<UnderwritingScorecard | null>;
   renderTemplate(templateId: string, loanId: string): Promise<{ subject: string; body: string }>;
+
+  // ── Attachment reads (Files Explorer) ────────────────────────────────────────
+  getAllAttachments(): Promise<Attachment[]>;
+  getAttachmentsForLoan(loanId: string): Promise<Attachment[]>;
 }

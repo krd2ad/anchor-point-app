@@ -184,6 +184,16 @@ export class MockLoanService implements LoanService {
     return buildScorecard(loanId, inputs);
   }
 
+  async getAllAttachments(): Promise<Attachment[]> {
+    return Promise.resolve([...this.attachments.values()]);
+  }
+
+  async getAttachmentsForLoan(loanId: string): Promise<Attachment[]> {
+    return Promise.resolve(
+      [...this.attachments.values()].filter(a => a.loanId === loanId)
+    );
+  }
+
   async renderTemplate(
     templateId: string,
     loanId: string,

@@ -8,12 +8,14 @@ const STATUS_STYLES: Record<Attachment['status'], string> = {
   requested: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40',
   received:  'bg-blue-500/20  text-blue-300  border border-blue-500/40',
   verified:  'bg-green-500/20 text-green-300  border border-green-500/40',
+  waived:    'bg-[#3d4b5c]    text-[#7a8899] border border-[#3d4b5c]',
 };
 
 const STATUS_LABELS: Record<Attachment['status'], string> = {
   requested: 'Requested',
   received:  'Received',
   verified:  'Verified',
+  waived:    'Waived',
 };
 
 export function AttachmentList({ attachments }: AttachmentListProps) {
