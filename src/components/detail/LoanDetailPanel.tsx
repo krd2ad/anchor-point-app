@@ -9,6 +9,7 @@ import { CommentComposer } from './CommentComposer';
 import { AttachmentList } from './AttachmentList';
 import { ActivityTimeline } from './ActivityTimeline';
 import { LoanNote } from './LoanNote';
+import { PaymentCalendar } from './PaymentCalendar';
 import { dueActions } from '../../lib/dates';
 
 function Divider() {
@@ -177,6 +178,9 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
                 </div>
               );
             })()}
+
+            {/* Payment calendar — servicing/collecting/special-servicing loans */}
+            <PaymentCalendar loan={loanDetail.loan} />
 
             {/* Summary */}
             <LoanSummary
