@@ -2,20 +2,7 @@ import { useLoans, useSelectedLoan, useFileTree } from '../../context/LoanServic
 import { STAGES } from '../../data/stages';
 import { loanRiskScore, type RiskLevel } from '../../lib/riskScore';
 import type { Loan } from '../../types';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmtMoney(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}k`;
-  return `$${n.toFixed(0)}`;
-}
-
-function ltvColor(ltv: number): string {
-  if (ltv > 0.75) return '#f87168';
-  if (ltv > 0.65) return '#f5cd47';
-  return '#4bce97';
-}
+import { formatAmount as fmtMoney, ltvColor } from '../../lib/formatters';
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string }> = {
   low:      { label: 'Low',      color: '#4bce97', bg: 'rgba(75,206,151,0.10)' },

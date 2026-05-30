@@ -2,15 +2,10 @@ import { useState } from 'react';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore } from '../../lib/riskScore';
 import type { Loan } from '../../types';
+import { formatAmount, ltvColor } from '../../lib/formatters';
 
 interface PortfolioBarProps {
   loans: Loan[];
-}
-
-function formatAmount(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}k`;
-  return `$${n}`;
 }
 
 const DIVIDER = (
@@ -68,14 +63,7 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
     count: loans.filter((l) => l.stageId === stage.id).length,
   }));
 
-  const ltvColor =
-    avgLtv == null
-      ? '#7a8899'
-      : avgLtv > 0.70
-      ? '#f87168'
-      : avgLtv > 0.60
-      ? '#f5cd47'
-      : '#4bce97';
+  const ltvColorValue = avgLtv == null ? '#7a8899' : ltvColor(avgLtv);
 
 
   // Portfolio health score (0-100)
@@ -126,7 +114,7 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
       }>
         <span className="flex items-center gap-1.5 cursor-default">
           <span className="text-[#7a8899]">Avg LTV</span>
-          <span className="font-bold" style={{ color: ltvColor }}>
+          <span className="font-bold" style={{ color: ltvColorValue }}>
             {avgLtv != null ? `${(avgLtv * 100).toFixed(1)}%` : '—'}
           </span>
         </span>

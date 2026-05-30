@@ -6,6 +6,7 @@ import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore } from '../../lib/riskScore';
 import { dueActions } from '../../lib/dates';
+import { formatAmount, daysSince } from '../../lib/formatters';
 
 interface LoanCardProps {
   loan: Loan;
@@ -19,12 +20,6 @@ interface LoanCardProps {
   isStarred?: boolean;
   onStarToggled?: (loan: Loan) => void;
   onMovedToStage?: (loanId: string, newStageId: string) => void;
-}
-
-function formatAmount(amount: number): string {
-  if (amount >= 1_000_000) return `$${parseFloat((amount / 1_000_000).toFixed(1))}M`;
-  if (amount >= 1_000) return `$${parseFloat((amount / 1_000).toFixed(0))}k`;
-  return `$${amount}`;
 }
 
 // Critical step IDs per stage — for funding-readiness indicator
@@ -289,9 +284,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
 }
 
 function DaysInStageBadge({ updatedAt }: { updatedAt: string }) {
-  const days = Math.floor(
-    (Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const days = daysSince(updatedAt);
 
   const colorClass =
     days >= 31 ? 'text-orange-400' :

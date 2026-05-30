@@ -1,5 +1,6 @@
 import type { Comment } from '../../types';
 import { STAGES } from '../../data/stages';
+import { avatarColor, avatarInitials } from '../../lib/formatters';
 
 interface CommentListProps {
   comments: Comment[];
@@ -8,27 +9,8 @@ interface CommentListProps {
   onReply?: (prefix: string) => void;
 }
 
-const AVATAR_COLORS = [
-  'bg-[#579dff]',
-  'bg-[#9f8fef]',
-  'bg-[#4bce97]',
-  'bg-[#f5cd47]',
-  'bg-[#f87168]',
-  'bg-[#6cc3e0]',
-];
-
-function hashColor(str: string): string {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h * 31 + str.charCodeAt(i)) & 0xffffffff;
-  }
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
 function initials(authorId: string): string {
-  // Derive readable initials from the id — take first 2 uppercase chars
-  const upper = authorId.replace(/[^a-zA-Z]/g, '').toUpperCase();
-  return upper.slice(0, 2) || 'U?';
+  return avatarInitials(authorId);
 }
 
 function timeAgo(iso: string): string {
@@ -59,7 +41,6 @@ export function CommentList({ comments, onResolve, onUnresolve, onReply }: Comme
     <div className="p-4 space-y-3">
       {sorted.map((c) => {
         const stage = STAGES.find((s) => s.id === c.stageId);
-        const color = hashColor(c.authorId);
         return (
           <div
             key={c.id}
@@ -67,7 +48,8 @@ export function CommentList({ comments, onResolve, onUnresolve, onReply }: Comme
           >
             {/* Avatar */}
             <div
-              className={`flex-shrink-0 w-7 h-7 rounded-full ${color} flex items-center justify-center text-[10px] font-bold text-white`}
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+              style={{ backgroundColor: avatarColor(c.authorId) }}
             >
               {initials(c.authorId)}
             </div>

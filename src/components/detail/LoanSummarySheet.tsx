@@ -2,20 +2,12 @@ import { useEffect } from 'react';
 import type { LoanDetail, StageChangeEvent } from '../../types';
 import { STAGES } from '../../data/stages';
 import { STAGE_STEPS } from '../../data/stageSteps';
+import { fmt, fmtDate } from '../../lib/formatters';
 
 interface LoanSummarySheetProps {
   loanDetail: LoanDetail;
   stageHistory: StageChangeEvent[];
   onClose: () => void;
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-}
-
-function fmtDate(d: string | null): string {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function Row({ label, value }: { label: string; value: string }) {

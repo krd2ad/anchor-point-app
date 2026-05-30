@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Comment, LoanStepStatus, StageChangeEvent } from '../../types';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
+import { avatarColor, avatarInitials } from '../../lib/formatters';
 
 interface ActivityTimelineProps {
   comments: Comment[];
@@ -19,14 +20,7 @@ function fmtDate(iso: string): string {
 }
 
 function initials(authorId: string): string {
-  return authorId.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 2) || 'U';
-}
-
-const AVATAR_COLORS = ['#579dff', '#9f8fef', '#4bce97', '#f5cd47', '#f87168', '#6cc3e0'];
-function avatarColor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffffffff;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  return avatarInitials(authorId);
 }
 
 export function ActivityTimeline({ comments, stepStatuses, stageHistory }: ActivityTimelineProps) {

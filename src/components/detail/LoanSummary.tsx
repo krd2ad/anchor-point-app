@@ -1,21 +1,13 @@
 import type { Loan, BorrowerEntity, Principal, Parcel } from '../../types';
 import { stateRiskBucket, type StateRiskBucket } from '../../lib/underwriting';
 import { EXTERNAL_PARTIES } from '../../data/externalParties';
+import { fmt, fmtDate, daysSince } from '../../lib/formatters';
 
 interface LoanSummaryProps {
   loan: Loan;
   borrowerEntity: BorrowerEntity;
   principal: Principal;
   parcels: Parcel[];
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-}
-
-function fmtDate(d: string | null): string {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function GridItem({ label, value }: { label: string; value: string }) {
@@ -29,9 +21,7 @@ function GridItem({ label, value }: { label: string; value: string }) {
 
 function InterestAccruedItem({ loan }: { loan: import('../../types').Loan }) {
   if (!loan.fundedDate) return null;
-  const daysFunded = Math.floor(
-    (Date.now() - new Date(loan.fundedDate).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysFunded = daysSince(loan.fundedDate);
   const dailyInterest = (loan.currentBalance * (loan.interestRate / 100)) / 365;
   const totalAccrued = dailyInterest * daysFunded;
   return (
