@@ -4,9 +4,12 @@
 Trello-style loan pipeline board for Anchor Point Lending, a private/hard-money real estate lender. Built as a demo (mock data, no backend). Stack: Vite + React 18 + TypeScript + Tailwind CSS v4 + dnd-kit.
 
 ## Dev server
+```bash
+npm run dev        # start → http://localhost:5173
+pkill -f "vite"    # stop the server (kills all vite processes)
 ```
-npm run dev   # http://localhost:5173
-```
+Or if you know the PID: `kill <PID>` (find it with `lsof -ti :5173`).
+The server runs in the background when launched from Claude Code — `pkill -f "vite"` is the reliable one-liner to stop it.
 
 ## Architecture
 Three-layer seam:
