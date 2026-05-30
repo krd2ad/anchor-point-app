@@ -141,8 +141,22 @@ We extended a [number]-day grace period prior to default interest. Attached are 
     name: 'Payoff Statement Approval to NSC',
     channel: 'email',
     subject: 'Payoff Statement Approval — [Property Address]',
-    // TODO: confirm wording with team — SOP marks this as "NEED A COPY AND PASTE STANDARD EMAIL HERE."
-    body: ``,
+    // DRAFT — confirm final wording with Rivers/team before use. SOP note: "NEED A COPY AND PASTE STANDARD EMAIL HERE."
+    body: `Hi NSC,
+
+Please see our approval for the payoff statement on the loan secured by [Property Address].
+
+We have reviewed the payoff figures and confirm the following must be included:
+- Exit fee per the loan documents
+- 6-month minimum interest (if applicable under loan terms)
+- Lien release fee
+
+Please ensure all amounts reflect these items before issuing the final payoff statement to the borrower and title company.
+
+Once confirmed, please share the approved payoff statement with the borrower and the title company handling the closing.
+
+Thank you,
+Anchor Point Lending`,
     mergeFields: ['Property Address'],
   },
 ];

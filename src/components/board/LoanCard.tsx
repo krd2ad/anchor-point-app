@@ -123,7 +123,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
       </div>
 
       {/* Amount + entity badge */}
-      <div className="flex items-center justify-between mb-2 pl-3">
+      <div className="flex items-center justify-between mb-1 pl-3">
         <span className="text-[#b6c2cf] text-xs font-mono">
           {formatAmount(loan.loanAmount)}
         </span>
@@ -131,6 +131,21 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
           {loan.lendingEntity}
         </span>
       </div>
+
+      {/* LTV indicator */}
+      {loan.computedLtv != null && (
+        <div className="pl-3 mb-1.5 flex items-center gap-1.5">
+          <span className="text-[10px] text-[#5d6f7e]">LTV</span>
+          <span
+            className={`text-[10px] font-mono font-semibold ${
+              loan.computedLtv > 0.7 ? 'text-[#f87168]' :
+              loan.computedLtv > 0.65 ? 'text-[#f5cd47]' : 'text-[#4bce97]'
+            }`}
+          >
+            {(loan.computedLtv * 100).toFixed(0)}%
+          </span>
+        </div>
+      )}
 
       {/* Critical gate warning */}
       {hasCriticalWarning && (

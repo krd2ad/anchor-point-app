@@ -62,7 +62,17 @@ export class MockLoanService implements LoanService {
   }
 
   async getLoans(): Promise<Loan[]> {
-    return Promise.resolve([...this.loans.values()]);
+    return Promise.resolve(
+      [...this.loans.values()].map(loan => {
+        const totalValuation = loan.parcelIds
+          .map(id => this.parcels.get(id)?.valuation ?? 0)
+          .reduce((a, b) => a + b, 0);
+        const computedLtv = totalValuation > 0
+          ? Math.round((loan.loanAmount / totalValuation) * 1000) / 1000
+          : undefined;
+        return { ...loan, computedLtv };
+      })
+    );
   }
 
   async getLoan(loanId: string): Promise<LoanDetail> {

@@ -94,6 +94,7 @@ export interface Loan {
   loanPosition?: string;                  // e.g. "First Lien"
   titleCompanyId?: string;                // → ExternalParty
   hasDrawProgram?: boolean;
+  computedLtv?: number;   // loanAmount / totalParcelValuation — populated by service on read
   createdAt: string;
   updatedAt: string;
 }

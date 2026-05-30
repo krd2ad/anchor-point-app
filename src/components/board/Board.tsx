@@ -12,6 +12,7 @@ import { STAGES } from '../../data/stages';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { useLoans, useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
 import { useToast } from '../shared/Toast';
+import { exportLoansAsCsv } from '../../lib/exportCsv';
 import { BoardHeader, type AppView } from './BoardHeader';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
@@ -212,7 +213,12 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="min-h-screen bg-[#1d2125] flex flex-col">
-          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} currentView={currentView} onViewChange={onViewChange} onNewLoan={() => setShowNewLoanModal(true)} />
+          <BoardHeader
+            zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset}
+            currentView={currentView} onViewChange={onViewChange}
+            onNewLoan={() => setShowNewLoanModal(true)}
+            onExportCsv={() => exportLoansAsCsv(loans, STAGES)}
+          />
 
           <div className="flex-1 overflow-x-auto">
             <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }}>

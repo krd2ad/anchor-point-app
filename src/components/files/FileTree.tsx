@@ -155,9 +155,17 @@ function TreeNodeRow({ node, selectedId, onSelect, depth = 0 }: TreeNodeRowProps
         {hasChildren ? <Chevron open={open} /> : <span className="w-3 flex-shrink-0" />}
         <FolderIcon open={open} />
         <span className="flex-1 truncate text-xs font-medium">
-          {node.kind === 'loan' ? node.name : node.name}
+          {node.name}
         </span>
-        {'counts' in node && <StatusChip counts={node.counts} />}
+        {node.kind === 'loan' && node.counts.total > 0 && (
+          <span className={`text-[10px] font-mono flex-shrink-0 ${
+            node.counts.verified === node.counts.total ? 'text-[#4bce97]' :
+            node.counts.requested > 0 ? 'text-[#f5cd47]' : 'text-[#6cc3e0]'
+          }`}>
+            {Math.round(node.counts.verified / node.counts.total * 100)}%
+          </span>
+        )}
+        {'counts' in node && node.kind !== 'loan' && <StatusChip counts={node.counts} />}
       </button>
 
       {open && hasChildren && (

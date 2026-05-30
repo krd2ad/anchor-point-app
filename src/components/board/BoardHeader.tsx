@@ -16,9 +16,10 @@ interface BoardHeaderProps {
   currentView: AppView;
   onViewChange: (view: AppView) => void;
   onNewLoan?: () => void;
+  onExportCsv?: () => void;
 }
 
-export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentView, onViewChange, onNewLoan }: BoardHeaderProps) {
+export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentView, onViewChange, onNewLoan, onExportCsv }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
 
   return (
@@ -60,6 +61,21 @@ export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentVie
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
             </svg>
             New Loan
+          </button>
+        )}
+
+        {/* Export CSV */}
+        {onExportCsv && (
+          <button
+            onClick={onExportCsv}
+            title="Export portfolio as CSV"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#7a8899] hover:text-[#b6c2cf] border border-[#3d4b5c] hover:border-[#5d6f7e] rounded-md transition-colors"
+          >
+            <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5">
+              <path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            CSV
           </button>
         )}
 
