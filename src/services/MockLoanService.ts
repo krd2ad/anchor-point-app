@@ -41,6 +41,8 @@ export class MockLoanService implements LoanService {
   private principals  = new Map<string, Principal>();
   private parcels     = new Map<string, Parcel>();
   private stepStatuses = new Map<string, LoanStepStatus>();
+  /** Secondary index: loanId → Map<stepId, LoanStepStatus> for O(1) lookups */
+  private stepStatusesByLoan = new Map<string, Map<string, LoanStepStatus>>();
   private comments    = new Map<string, Comment>();
   private attachments = new Map<string, Attachment>();
   private stageHistory = new Map<string, StageChangeEvent[]>();
@@ -54,6 +56,12 @@ export class MockLoanService implements LoanService {
     for (const ss of SEED_STEP_STATUSES)      this.stepStatuses.set(ss.id, { ...ss });
     for (const c  of SEED_COMMENTS)           this.comments.set(c.id, { ...c });
     for (const a  of SEED_ATTACHMENTS)        this.attachments.set(a.id, { ...a });
+
+    // Build secondary index for O(1) step-status lookups by (loanId, stepId)
+    for (const ss of SEED_STEP_STATUSES) {
+      if (!this.stepStatusesByLoan.has(ss.loanId)) this.stepStatusesByLoan.set(ss.loanId, new Map());
+      this.stepStatusesByLoan.get(ss.loanId)!.set(ss.stepId, { ...ss });
+    }
 
     // Seed stage history — group by loanId
     for (const evt of SEED_STAGE_HISTORY) {
@@ -113,7 +121,7 @@ export class MockLoanService implements LoanService {
       return p;
     });
 
-    const stepStatuses = [...this.stepStatuses.values()].filter(ss => ss.loanId === loanId);
+    const stepStatuses = [...(this.stepStatusesByLoan.get(loanId)?.values() ?? [])];
     const comments     = [...this.comments.values()].filter(c => c.loanId === loanId);
     const attachments  = [...this.attachments.values()].filter(a => a.loanId === loanId);
 
@@ -121,9 +129,7 @@ export class MockLoanService implements LoanService {
   }
 
   async getStepStatuses(loanId: string): Promise<LoanStepStatus[]> {
-    return Promise.resolve(
-      [...this.stepStatuses.values()].filter(ss => ss.loanId === loanId)
-    );
+    return Promise.resolve([...(this.stepStatusesByLoan.get(loanId)?.values() ?? [])]);
   }
 
   // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -156,10 +162,8 @@ export class MockLoanService implements LoanService {
     stepId: string,
     status: StepStatus,
   ): Promise<LoanStepStatus> {
-    // Find existing row for this (loanId, stepId) pair
-    const existing = [...this.stepStatuses.values()].find(
-      ss => ss.loanId === loanId && ss.stepId === stepId
-    );
+    // O(1) lookup via secondary index
+    const existing = this.stepStatusesByLoan.get(loanId)?.get(stepId);
 
     const isDone = status === 'done';
 
@@ -167,10 +171,12 @@ export class MockLoanService implements LoanService {
       existing.status      = status;
       existing.completedBy = isDone ? SEED_USERS[0].id : null;
       existing.completedAt = isDone ? '2025-06-01T00:00:00.000Z' : null;
+      // Keep primary map in sync
+      this.stepStatuses.set(existing.id, existing);
       return Promise.resolve({ ...existing });
     }
 
-    // Create a new row
+    // Create a new row and add to both indexes
     const row: LoanStepStatus = {
       id:          nanoid(),
       loanId,
@@ -180,6 +186,8 @@ export class MockLoanService implements LoanService {
       completedAt: isDone ? '2025-06-01T00:00:00.000Z' : null,
     };
     this.stepStatuses.set(row.id, row);
+    if (!this.stepStatusesByLoan.has(loanId)) this.stepStatusesByLoan.set(loanId, new Map());
+    this.stepStatusesByLoan.get(loanId)!.set(stepId, row);
     return Promise.resolve({ ...row });
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { LoanDetail, Comment, StageChangeEvent } from '../../types';
 import { useSelectedLoan, useLoanService, useLoans } from '../../context/LoanServiceProvider';
 import { LoanSummary } from './LoanSummary';
@@ -40,12 +40,15 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
   const { loans } = useLoans();
 
   // Sorted loan IDs for prev/next navigation (stage order, then displayLabel)
-  const sortedLoanIds = [...loans]
-    .sort((a, b) => {
-      const so = STAGES.findIndex(s => s.id === a.stageId) - STAGES.findIndex(s => s.id === b.stageId);
-      return so !== 0 ? so : a.displayLabel.localeCompare(b.displayLabel);
-    })
-    .map(l => l.id);
+  const sortedLoanIds = useMemo(() =>
+    [...loans]
+      .sort((a, b) => {
+        const so = STAGES.findIndex(s => s.id === a.stageId) - STAGES.findIndex(s => s.id === b.stageId);
+        return so !== 0 ? so : a.displayLabel.localeCompare(b.displayLabel);
+      })
+      .map(l => l.id),
+    [loans]
+  );
 
   const currentIndex = selectedLoanId ? sortedLoanIds.indexOf(selectedLoanId) : -1;
   const hasPrev = currentIndex > 0;
