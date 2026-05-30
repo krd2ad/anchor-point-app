@@ -20,7 +20,11 @@ function Spinner() {
   );
 }
 
-export function LoanDetailPanel() {
+interface LoanDetailPanelProps {
+  onOpenInFiles?: () => void;
+}
+
+export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
   const { selectedLoanId, clearSelection } = useSelectedLoan();
   const service = useLoanService();
 
@@ -162,7 +166,7 @@ export function LoanDetailPanel() {
             <Divider />
 
             {/* Attachments */}
-            <AttachmentList attachments={loanDetail.attachments} />
+            <AttachmentList attachments={loanDetail.attachments} onOpenInFiles={onOpenInFiles} />
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ import {
 import { STAGES } from '../../data/stages';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { useLoans, useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
-import { BoardHeader } from './BoardHeader';
+import { BoardHeader, type AppView } from './BoardHeader';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
 import type { Loan } from '../../types';
@@ -98,7 +98,12 @@ const CRITICAL_STEP_IDS = new Set(
   STAGE_STEPS.filter(s => s.severity === 'critical' && s.stageId === 'stage-3').map(s => s.id)
 );
 
-export function Board() {
+interface BoardProps {
+  currentView: AppView;
+  onViewChange: (view: AppView) => void;
+}
+
+export function Board({ currentView, onViewChange }: BoardProps) {
   const { loans, loading } = useLoans();
   const { selectedLoanId, selectLoan } = useSelectedLoan();
   const service = useLoanService();
@@ -202,7 +207,7 @@ export function Board() {
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="min-h-screen bg-[#1d2125] flex flex-col">
-          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />
+          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} currentView={currentView} onViewChange={onViewChange} />
 
           <div className="flex-1 overflow-x-auto">
             <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }}>

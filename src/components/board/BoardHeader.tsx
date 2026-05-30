@@ -6,21 +6,47 @@ const AVATARS = [
   { initials: 'T', color: '#f87168' },
 ];
 
+export type AppView = 'board' | 'files';
+
 interface BoardHeaderProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomReset: () => void;
+  currentView: AppView;
+  onViewChange: (view: AppView) => void;
 }
 
-export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset }: BoardHeaderProps) {
+export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentView, onViewChange }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
 
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-[#1d2125] border-b border-[#2d3748] flex-shrink-0">
-      <span className="font-bold text-[#e8ecf0] text-base tracking-wide">
-        Anchor Point Lending
-      </span>
+      <div className="flex items-center gap-6">
+        <span className="font-bold text-[#e8ecf0] text-base tracking-wide">
+          Anchor Point Lending
+        </span>
+
+        {/* View tabs */}
+        <nav className="flex items-center gap-1">
+          {(['board', 'files'] as AppView[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => onViewChange(v)}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors relative ${
+                currentView === v
+                  ? 'text-[#e8ecf0]'
+                  : 'text-[#7a8899] hover:text-[#b6c2cf] hover:bg-[#282e33]'
+              }`}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+              {currentView === v && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#579dff] rounded-full" />
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       <div className="flex items-center gap-3">
         {/* Zoom controls */}
@@ -67,3 +93,4 @@ export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset }: BoardHea
     </header>
   );
 }
+

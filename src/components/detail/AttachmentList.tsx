@@ -2,6 +2,7 @@ import type { Attachment } from '../../types';
 
 interface AttachmentListProps {
   attachments: Attachment[];
+  onOpenInFiles?: () => void;
 }
 
 const STATUS_STYLES: Record<Attachment['status'], string> = {
@@ -18,7 +19,7 @@ const STATUS_LABELS: Record<Attachment['status'], string> = {
   waived:    'Waived',
 };
 
-export function AttachmentList({ attachments }: AttachmentListProps) {
+export function AttachmentList({ attachments, onOpenInFiles }: AttachmentListProps) {
   return (
     <div className="p-4">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-[#b6c2cf] mb-3">
@@ -46,6 +47,17 @@ export function AttachmentList({ attachments }: AttachmentListProps) {
             </li>
           ))}
         </ul>
+      )}
+      {onOpenInFiles && (
+        <button
+          onClick={onOpenInFiles}
+          className="mt-4 flex items-center gap-1.5 text-xs text-[#579dff] hover:text-[#85b8ff] transition-colors"
+        >
+          <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5">
+            <path d="M2 4a1 1 0 011-1h4l2 2h5a1 1 0 011 1v7a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="currentColor" strokeWidth="1.25"/>
+          </svg>
+          Open in Files
+        </button>
       )}
     </div>
   );
