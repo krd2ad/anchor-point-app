@@ -2,7 +2,7 @@ import { useLoans, useSelectedLoan, useFileTree } from '../../context/LoanServic
 import { STAGES } from '../../data/stages';
 import { loanRiskScore, type RiskLevel } from '../../lib/riskScore';
 import type { Loan } from '../../types';
-import { formatAmount as fmtMoney, ltvColor } from '../../lib/formatters';
+import { formatAmount as fmtMoney, ltvColor, daysSince } from '../../lib/formatters';
 
 const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string }> = {
   low:      { label: 'Low',      color: '#4bce97', bg: 'rgba(75,206,151,0.10)' },
@@ -206,9 +206,7 @@ function PipelineVelocity({ loans }: { loans: Loan[] }) {
   const rows = activeStages.map((stage) => {
     const stageLoans = loans.filter((l) => l.stageId === stage.id);
     if (stageLoans.length === 0) return { stage, avg: null };
-    const days = stageLoans.map((l) =>
-      Math.floor((Date.now() - new Date(l.updatedAt).getTime()) / 86400000),
-    );
+    const days = stageLoans.map((l) => daysSince(l.updatedAt));
     const avg = Math.floor(days.reduce((s, d) => s + d, 0) / days.length);
     return { stage, avg };
   });
@@ -526,9 +524,7 @@ function HeatMap({ loans, onSelectLoan }: { loans: Loan[]; onSelectLoan: (id: st
               <div className="flex items-center justify-between gap-1">
                 <span className="text-[10px] text-[#7a8899] truncate">{stage?.name ?? loan.stageId}</span>
                 <span className="text-[10px] font-mono text-[#b6c2cf] flex-shrink-0">
-                  {loan.loanAmount >= 1_000_000
-                    ? `$${(loan.loanAmount / 1_000_000).toFixed(1)}M`
-                    : `$${Math.round(loan.loanAmount / 1_000)}k`}
+                  {fmtMoney(loan.loanAmount)}
                 </span>
               </div>
               {loan.computedLtv != null && (

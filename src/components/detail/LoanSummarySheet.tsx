@@ -183,7 +183,7 @@ export function LoanSummarySheet({ loanDetail, stageHistory, onClose }: LoanSumm
                   {stageHistory.map(evt => (
                     <li key={evt.id} className="flex items-center gap-3 text-xs text-gray-700">
                       <span className="w-32 text-gray-400 tabular-nums">
-                        {new Date(evt.movedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {fmtDate(evt.movedAt)}
                       </span>
                       <span className="text-gray-500">{stageName(evt.fromStageId)}</span>
                       <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3 text-gray-400 flex-shrink-0">
@@ -238,7 +238,7 @@ export function LoanSummarySheet({ loanDetail, stageHistory, onClose }: LoanSumm
                     <li key={c.id} className="border-l-2 border-gray-200 pl-3">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[10px] text-gray-400 tabular-nums">
-                          {new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {fmtDate(c.createdAt)}
                         </span>
                         <span className="text-[10px] text-gray-400">·</span>
                         <span className="text-[10px] text-gray-500">{stageName(c.stageId)}</span>

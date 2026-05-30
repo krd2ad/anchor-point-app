@@ -409,15 +409,18 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const dueActionsCount = loans.filter(
-    (l) => dueActions(stageOverrides.get(l.id) ?? l.stageId, l.firstPaymentDate, today).length > 0
-  ).length;
-  const dueActionItems = loans
-    .flatMap((l) => {
-      const effectiveStageId = stageOverrides.get(l.id) ?? l.stageId;
-      const actions = dueActions(effectiveStageId, l.firstPaymentDate, today);
-      return actions.map((a) => ({ label: l.displayLabel, reason: a.reason }));
-    });
+  // Single pass: compute both count and items together to avoid calling dueActions twice per loan
+  const { dueActionsCount, dueActionItems } = loans.reduce(
+    (acc, l) => {
+      const actions = dueActions(stageOverrides.get(l.id) ?? l.stageId, l.firstPaymentDate, today);
+      if (actions.length > 0) {
+        acc.dueActionsCount += 1;
+        acc.dueActionItems.push(...actions.map(a => ({ label: l.displayLabel, reason: a.reason })));
+      }
+      return acc;
+    },
+    { dueActionsCount: 0, dueActionItems: [] as { label: string; reason: string }[] }
+  );
 
   return (
     <>

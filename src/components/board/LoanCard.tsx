@@ -6,7 +6,7 @@ import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore } from '../../lib/riskScore';
 import { dueActions } from '../../lib/dates';
-import { formatAmount, daysSince } from '../../lib/formatters';
+import { formatAmount, daysSince, ltvColor } from '../../lib/formatters';
 
 interface LoanCardProps {
   loan: Loan;
@@ -218,12 +218,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
       {loan.computedLtv != null && (
         <div className="pl-3 mb-1.5 flex items-center gap-1.5">
           <span className="text-[10px] text-[#5d6f7e]">LTV</span>
-          <span
-            className={`text-[10px] font-mono font-semibold ${
-              loan.computedLtv > 0.7 ? 'text-[#f87168]' :
-              loan.computedLtv > 0.65 ? 'text-[#f5cd47]' : 'text-[#4bce97]'
-            }`}
-          >
+          <span className="text-[10px] font-mono font-semibold" style={{ color: ltvColor(loan.computedLtv) }}>
             {(loan.computedLtv * 100).toFixed(0)}%
           </span>
         </div>

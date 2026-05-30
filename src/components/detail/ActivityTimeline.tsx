@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Comment, LoanStepStatus, StageChangeEvent } from '../../types';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
-import { avatarColor, avatarInitials } from '../../lib/formatters';
+import { avatarColor, avatarInitials, fmtDate } from '../../lib/formatters';
 
 interface ActivityTimelineProps {
   comments: Comment[];
@@ -15,13 +15,6 @@ type ActivityEvent =
   | { kind: 'step'; id: string; stepId: string; ts: string }
   | { kind: 'stageChange'; id: string; fromStageId: string; toStageId: string; ts: string };
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function initials(authorId: string): string {
-  return avatarInitials(authorId);
-}
 
 export function ActivityTimeline({ comments, stepStatuses, stageHistory }: ActivityTimelineProps) {
   const [showAll, setShowAll] = useState(false);
@@ -92,7 +85,7 @@ export function ActivityTimeline({ comments, stepStatuses, stageHistory }: Activ
                       className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0"
                       style={{ backgroundColor: avatarColor(evt.authorId) }}
                     >
-                      {initials(evt.authorId)}
+                      {avatarInitials(evt.authorId)}
                     </span>
                     <span className="text-[10px] text-[#7a8899]">commented</span>
                     {evt.stageId && stageMap.get(evt.stageId) && (
