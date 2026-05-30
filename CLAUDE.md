@@ -103,6 +103,11 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 - **New Loan form** — "+ New Loan" button in BoardHeader opens a modal (display label, loan amount, lending entity select). `createLoan()` added to LoanService interface + MockLoanService. Provider gains `refreshLoans()`. Toast fires on creation. New loans land in stage-1.
 - **Toast notification system** — `ToastProvider` wraps the app; `useToast()` hook fires success/warning/info toasts (auto-dismiss 3s, bottom-right). Wired into "Mark as Sent" (success) and drag override (warning).
 
+### Session 2026-05-29 (3 items — keyboard nav, comment reply, scorecard sidebar)
+- **Keyboard navigation on the board** — `ArrowLeft`/`ArrowRight` moves selection between stage columns (wrapping, skips empty columns); `ArrowUp`/`ArrowDown` moves between cards within the column; `Enter`/`Space` opens the detail panel; `Escape` clears selection or deselects keyboard focus. A dashed blue ring (`ring-2 ring-[#579dff]/30 ring-dashed`) distinguishes keyboard focus from click-selection. `keyboardFocusedLoanId` state lives in Board, passed via StageColumn → LoanCard. Only active when no modal/panel is open.
+- **Comment reply / threading (lightweight)** — each comment now has a "Reply" link below Resolve/Unresolve. Clicking calls `onReply` with `@<INITIALS>: ` prefix. `CommentComposer` accepts `initialBody` + `onInitialBodyConsumed` props to pre-fill and auto-focus the textarea. `LoanDetailPanel` wires `replyPrefix` state between the two components. No nested thread UI — replies land flat in the list.
+- **Scorecard sidebar button on column headers** — stage-1 and stage-2 column headers show a 📊 icon button. Clicking toggles a floating popover (positioned below the header) that lazy-loads all loan scorecards via `Promise.all(getScorecard)` and displays: decision breakdown (Approved / Suspended / Denied / Unknown counts), average LTV, and count of loans with LTV > 70%. Stats computed purely from the `loans` prop (`computedLtv`) for LTV and service calls for decisions.
+
 ---
 
 ## Future work (next sessions)
@@ -111,7 +116,6 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 - [ ] **Collateral value / LTV on card** — show computed LTV from scorecard on the loan card (useful for quick board-level assessment).
 
 ### Medium priority
-- [ ] **Comment threading / reply** — add reply-to support on comments for better conversation tracking.
 - [ ] **Bulk actions** — select multiple loans, move to stage, assign owner.
 - [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry.
 - [ ] **Files view: folder completion indicator** — per-loan overall completion percentage across all categories.
@@ -119,7 +123,5 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 
 ### Nice to have
 - [ ] **Dark/light mode toggle** — currently dark-only.
-- [ ] **Keyboard navigation** — arrow keys to move between loan cards, Enter to open detail.
 - [ ] **Export to CSV** — download loan portfolio as spreadsheet.
 - [ ] **Print / PDF view** — printable loan summary sheet.
-- [ ] **Scorecard sidebar on board** — click a column header to see portfolio-level scorecard summary for all loans in that stage.

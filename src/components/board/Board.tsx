@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -108,7 +108,7 @@ interface BoardProps {
 
 export function Board({ currentView, onViewChange }: BoardProps) {
   const { loans, loading } = useLoans();
-  const { selectedLoanId, selectLoan } = useSelectedLoan();
+  const { selectedLoanId, selectLoan, clearSelection } = useSelectedLoan();
   const service = useLoanService();
   const { showToast } = useToast();
 
@@ -116,6 +116,10 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);
   const [showNewLoanModal, setShowNewLoanModal] = useState(false);
+
+  // Keyboard navigation state
+  const [keyboardFocusedLoanId, setKeyboardFocusedLoanId] = useState<string | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const ZOOM_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
   const [zoom, setZoom] = useState(0.8);
@@ -134,6 +138,117 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [zoomIn, zoomOut, zoomReset]);
+
+  // Board keyboard navigation — only active when no modal/panel is open
+  useEffect(() => {
+    if (loading) return;
+
+    function handleBoardKey(e: KeyboardEvent) {
+      // Don't activate if a modal is open, if detail panel is open, or if focus is inside an input
+      if (showNewLoanModal) return;
+      if (pendingDrag) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT') return;
+
+      const isPanelOpen = selectedLoanId !== null;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isPanelOpen) {
+          clearSelection();
+        } else {
+          setKeyboardFocusedLoanId(null);
+        }
+        return;
+      }
+
+      // If panel is open, don't handle arrow/enter keys (let the panel manage itself)
+      if (isPanelOpen) return;
+
+      // Build stageLoans map (same as the render logic)
+      const stageLoanMap = new Map<string, Loan[]>();
+      for (const stage of STAGES) {
+        stageLoanMap.set(
+          stage.id,
+          loans.filter((l) => (stageOverrides.get(l.id) ?? l.stageId) === stage.id)
+        );
+      }
+
+      // Find which stage/index the currently focused loan is in
+      let focusedStageIdx = -1;
+      let focusedCardIdx = -1;
+
+      if (keyboardFocusedLoanId) {
+        for (let si = 0; si < STAGES.length; si++) {
+          const stageLoans = stageLoanMap.get(STAGES[si].id) ?? [];
+          const ci = stageLoans.findIndex((l) => l.id === keyboardFocusedLoanId);
+          if (ci !== -1) {
+            focusedStageIdx = si;
+            focusedCardIdx = ci;
+            break;
+          }
+        }
+      }
+
+      // Default focus to first non-empty stage if nothing focused
+      if (focusedStageIdx === -1) {
+        const firstNonEmpty = STAGES.findIndex((s) => (stageLoanMap.get(s.id)?.length ?? 0) > 0);
+        focusedStageIdx = firstNonEmpty !== -1 ? firstNonEmpty : 0;
+        focusedCardIdx = 0;
+      }
+
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        let nextStageIdx = (focusedStageIdx + dir + STAGES.length) % STAGES.length;
+        // Wrap until we find a non-empty stage (or exhaust all)
+        let attempts = STAGES.length;
+        while ((stageLoanMap.get(STAGES[nextStageIdx].id)?.length ?? 0) === 0 && attempts-- > 0) {
+          nextStageIdx = (nextStageIdx + dir + STAGES.length) % STAGES.length;
+        }
+        const nextLoans = stageLoanMap.get(STAGES[nextStageIdx].id) ?? [];
+        const clampedCardIdx = Math.min(focusedCardIdx, nextLoans.length - 1);
+        if (nextLoans.length > 0) {
+          setKeyboardFocusedLoanId(nextLoans[Math.max(0, clampedCardIdx)].id);
+        }
+      }
+
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const stageLoans = stageLoanMap.get(STAGES[focusedStageIdx].id) ?? [];
+        if (stageLoans.length === 0) return;
+        const dir = e.key === 'ArrowDown' ? 1 : -1;
+        const nextCardIdx = Math.max(0, Math.min(stageLoans.length - 1, focusedCardIdx + dir));
+        setKeyboardFocusedLoanId(stageLoans[nextCardIdx].id);
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (keyboardFocusedLoanId) {
+          e.preventDefault();
+          selectLoan(keyboardFocusedLoanId);
+        }
+      }
+    }
+
+    const boardEl = boardRef.current;
+    if (boardEl) {
+      boardEl.addEventListener('keydown', handleBoardKey);
+      return () => boardEl.removeEventListener('keydown', handleBoardKey);
+    }
+    // Fallback: listen on window so keyboard nav works even without explicit focus
+    window.addEventListener('keydown', handleBoardKey);
+    return () => window.removeEventListener('keydown', handleBoardKey);
+  }, [
+    loading,
+    loans,
+    stageOverrides,
+    keyboardFocusedLoanId,
+    selectedLoanId,
+    selectLoan,
+    clearSelection,
+    showNewLoanModal,
+    pendingDrag,
+  ]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -221,7 +336,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
           />
 
           <div className="flex-1 overflow-x-auto">
-            <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }}>
+            <div ref={boardRef} className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }} tabIndex={-1}>
               {STAGES.map((stage) => {
                 const stageLoans = loans.filter(
                   (l) => (stageOverrides.get(l.id) ?? l.stageId) === stage.id
@@ -235,6 +350,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
                     onSelectLoan={selectLoan}
                     activeId={activeId}
                     stageOverrides={stageOverrides}
+                    keyboardFocusedLoanId={keyboardFocusedLoanId}
                   />
                 );
               })}

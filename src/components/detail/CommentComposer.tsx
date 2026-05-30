@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Comment } from '../../types';
 import { STAGES } from '../../data/stages';
 import { useLoanService } from '../../context/LoanServiceProvider';
@@ -7,12 +7,27 @@ interface CommentComposerProps {
   loanId: string;
   currentStageId: string;
   onCommentAdded: (c: Comment) => void;
+  initialBody?: string;
+  onInitialBodyConsumed?: () => void;
 }
 
-export function CommentComposer({ loanId, currentStageId, onCommentAdded }: CommentComposerProps) {
+export function CommentComposer({ loanId, currentStageId, onCommentAdded, initialBody, onInitialBodyConsumed }: CommentComposerProps) {
   const service = useLoanService();
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // When a reply prefix is injected, pre-fill the textarea and focus it
+  useEffect(() => {
+    if (initialBody) {
+      setBody(initialBody);
+      textareaRef.current?.focus();
+      // Place cursor at end
+      const len = initialBody.length;
+      textareaRef.current?.setSelectionRange(len, len);
+      onInitialBodyConsumed?.();
+    }
+  }, [initialBody, onInitialBodyConsumed]);
 
   const stage = STAGES.find((s) => s.id === currentStageId);
 
@@ -32,6 +47,7 @@ export function CommentComposer({ loanId, currentStageId, onCommentAdded }: Comm
   return (
     <div className="p-4 space-y-2">
       <textarea
+        ref={textareaRef}
         rows={3}
         value={body}
         onChange={(e) => setBody(e.target.value)}

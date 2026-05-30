@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { LoanDetail, Comment } from '../../types';
 import { useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
 import { LoanSummary } from './LoanSummary';
@@ -34,6 +34,12 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
   const [comments, setComments]     = useState<Comment[]>([]);
   // Track whether we're actually open (for animation purposes)
   const [isOpen, setIsOpen]         = useState(false);
+  // Reply prefix for the composer (set by CommentList → cleared after CommentComposer consumes it)
+  const [replyPrefix, setReplyPrefix] = useState<string | undefined>(undefined);
+
+  const handleReply = useCallback((prefix: string) => {
+    setReplyPrefix(prefix);
+  }, []);
 
   // Fetch loan detail whenever selectedLoanId changes
   useEffect(() => {
@@ -177,11 +183,14 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
                 comments={comments}
                 onResolve={handleResolve}
                 onUnresolve={handleUnresolve}
+                onReply={handleReply}
               />
               <CommentComposer
                 loanId={loanDetail.loan.id}
                 currentStageId={loanDetail.loan.stageId}
                 onCommentAdded={handleCommentAdded}
+                initialBody={replyPrefix}
+                onInitialBodyConsumed={() => setReplyPrefix(undefined)}
               />
             </div>
 

@@ -11,6 +11,7 @@ interface LoanCardProps {
   onSelect: () => void;
   isOverlay?: boolean;
   effectiveStageId?: string;
+  isKeyboardFocused?: boolean;
 }
 
 function formatAmount(amount: number): string {
@@ -30,7 +31,7 @@ for (const step of STAGE_STEPS) {
   }
 }
 
-export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId }: LoanCardProps) {
+export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false }: LoanCardProps) {
   const service = useLoanService();
   const [doneCount, setDoneCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -98,9 +99,11 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
               ? 'border-[#f87168]/40 cursor-grab hover:border-[#f87168]/60'
               : isSelected
                 ? 'border-[#579dff] ring-2 ring-[#579dff]/50 cursor-pointer'
-                : isComplete
-                  ? 'border-[#4bce97]/30 cursor-grab hover:border-[#4bce97]/50'
-                  : 'border-[#454f59] hover:border-[#6b7a8d] cursor-grab',
+                : isKeyboardFocused
+                  ? 'border-[#579dff]/60 ring-2 ring-[#579dff]/30 ring-dashed cursor-grab'
+                  : isComplete
+                    ? 'border-[#4bce97]/30 cursor-grab hover:border-[#4bce97]/50'
+                    : 'border-[#454f59] hover:border-[#6b7a8d] cursor-grab',
       ].join(' ')}
     >
       {/* Top row: label + badges */}

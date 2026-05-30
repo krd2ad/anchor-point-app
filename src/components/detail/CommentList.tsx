@@ -5,6 +5,7 @@ interface CommentListProps {
   comments: Comment[];
   onResolve: (id: string) => void;
   onUnresolve: (id: string) => void;
+  onReply?: (prefix: string) => void;
 }
 
 const AVATAR_COLORS = [
@@ -41,7 +42,7 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
-export function CommentList({ comments, onResolve, onUnresolve }: CommentListProps) {
+export function CommentList({ comments, onResolve, onUnresolve, onReply }: CommentListProps) {
   const sorted = [...comments].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -91,7 +92,7 @@ export function CommentList({ comments, onResolve, onUnresolve }: CommentListPro
 
               <p className="text-sm text-[#b6c2cf] leading-snug break-words">{c.body}</p>
 
-              <div className="mt-1.5">
+              <div className="mt-1.5 flex items-center gap-3">
                 {c.resolved ? (
                   <button
                     onClick={() => onUnresolve(c.id)}
@@ -105,6 +106,14 @@ export function CommentList({ comments, onResolve, onUnresolve }: CommentListPro
                     className="text-[11px] text-[#4bce97] hover:text-green-300 transition-colors"
                   >
                     Resolve
+                  </button>
+                )}
+                {onReply && (
+                  <button
+                    onClick={() => onReply(`@${initials(c.authorId)}: `)}
+                    className="text-[11px] text-[#7a8899] hover:text-[#579dff] transition-colors"
+                  >
+                    Reply
                   </button>
                 )}
               </div>
