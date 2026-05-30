@@ -27,14 +27,14 @@ function Tip({ children, tip }: { children: React.ReactNode; tip: React.ReactNod
     >
       {children}
       {open && (
-        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-50
+        <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2.5 z-50
           bg-[#1a2028] border border-[#3d4b5c] rounded-lg px-3 py-2.5 text-[11px] text-[#b6c2cf]
           whitespace-nowrap shadow-2xl min-w-max leading-relaxed"
           style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
         >
+          {/* Caret pointing up */}
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-b-[#3d4b5c]" />
           {tip}
-          {/* Caret */}
-          <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-[#3d4b5c]" />
         </span>
       )}
     </span>
