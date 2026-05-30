@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore } from '../../lib/riskScore';
 import type { Loan } from '../../types';
@@ -17,16 +18,25 @@ const DIVIDER = (
 );
 
 function Tip({ children, tip }: { children: React.ReactNode; tip: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
   return (
-    <span className="relative group/tip flex-shrink-0">
+    <span
+      className="relative flex-shrink-0"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       {children}
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
-        opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150
-        bg-[#22272b] border border-[#3d4b5c] rounded-md px-2.5 py-2 text-[11px] text-[#b6c2cf]
-        whitespace-nowrap shadow-xl min-w-max">
-        {tip}
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#3d4b5c]" />
-      </span>
+      {open && (
+        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-50
+          bg-[#1a2028] border border-[#3d4b5c] rounded-lg px-3 py-2.5 text-[11px] text-[#b6c2cf]
+          whitespace-nowrap shadow-2xl min-w-max leading-relaxed"
+          style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }}
+        >
+          {tip}
+          {/* Caret */}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-[#3d4b5c]" />
+        </span>
+      )}
     </span>
   );
 }
