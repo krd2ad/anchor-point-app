@@ -1,6 +1,6 @@
 // ─── Primitive unions ──────────────────────────────────────────────────────────
 
-export type LendingEntity = 'APL' | 'APG';
+export type LendingEntity = 'APL';
 export type BorrowerEntityType = 'LLC' | 'Individual' | 'Corp' | 'Trust';
 export type PropertyType = 'Land' | 'SFR' | 'Commercial' | 'Other';
 export type StepStatus = 'done' | 'not_done' | 'na';

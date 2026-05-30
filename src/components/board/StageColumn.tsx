@@ -17,6 +17,9 @@ interface StageColumnProps {
   hiddenCount?: number;
   starOverrides?: Map<string, boolean>;
   onStarToggled?: (loan: Loan) => void;
+  onMovedToStage?: (loanId: string, newStageId: string) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 function formatPortfolioValue(total: number): string {
@@ -27,6 +30,18 @@ function formatPortfolioValue(total: number): string {
 
 // Stages that show the scorecard button (underwriting-relevant)
 const SCORECARD_STAGES = new Set(['stage-1', 'stage-2']);
+
+// Expected max days per stage before a loan is considered overdue
+const STAGE_SLA_DAYS: Record<string, number> = {
+  'stage-1': 14,   // New Intake: 2 weeks
+  'stage-2': 21,   // Active Processing: 3 weeks
+  'stage-3': 30,   // Title & Closing: 1 month
+  'stage-4': 14,   // Servicing Setup: 2 weeks
+  'stage-5': 0,    // Collecting: no SLA (ongoing)
+  'stage-6': 30,   // Special Servicing: 1 month
+  'stage-7': 90,   // Foreclosure: 3 months
+  'stage-8': 0,    // Completed: no SLA
+};
 
 interface ScorecardStats {
   approved: number;
@@ -197,6 +212,9 @@ export function StageColumn({
   hiddenCount = 0,
   starOverrides,
   onStarToggled,
+  onMovedToStage,
+  collapsed = false,
+  onToggleCollapse,
 }: StageColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: stage.id });
   const [showScorecard, setShowScorecard] = useState(false);
@@ -208,10 +226,74 @@ export function StageColumn({
   // Portfolio value for the column header metric
   const portfolioTotal = loans.reduce((sum, l) => sum + l.loanAmount, 0);
 
+  // SLA overdue: loans past the expected stage duration (only when SLA > 0)
+  const slaDays = STAGE_SLA_DAYS[stage.id] ?? 0;
+  const overdueLoans = slaDays > 0
+    ? loans.filter(l =>
+        Math.floor((Date.now() - new Date(l.updatedAt).getTime()) / 86400000) > slaDays
+      )
+    : [];
+
+  // ── Collapsed view ─────────────────────────────────────────────────────────
+  if (collapsed) {
+    return (
+      <div
+        ref={setNodeRef}
+        className={`min-w-[48px] max-w-[48px] rounded-lg mx-2 flex flex-col transition-all duration-200 ${
+          isDraggingIntoThis
+            ? 'bg-[#2c3a47] ring-2 ring-inset ring-[#579dff]/40'
+            : isCompleted
+              ? 'bg-[#1d2125]'
+              : 'bg-[#282e33]'
+        }`}
+        style={{ maxHeight: 'calc(100vh - 64px)', borderLeftWidth: 3, borderLeftColor: stage.color, borderLeftStyle: 'solid' }}
+      >
+        {/* Expand button at top */}
+        <button
+          onClick={onToggleCollapse}
+          className="w-full flex items-center justify-center pt-3 pb-2 text-[#5a6878] hover:text-[#b6c2cf] transition-colors"
+          title={`Expand ${stage.name}`}
+          aria-label={`Expand ${stage.name}`}
+        >
+          <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+            <path d="M4.5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+
+        {/* Rotated stage name */}
+        <div className="flex-1 flex items-center justify-center overflow-hidden py-2">
+          <span
+            className={`text-[10px] font-semibold leading-none whitespace-nowrap select-none ${
+              isCompleted ? 'italic text-[#8c9bab]' : 'text-[#8c9bab]'
+            }`}
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+          >
+            {stage.name}
+          </span>
+        </div>
+
+        {/* Count badge — rotated */}
+        <div className="flex items-center justify-center pb-3">
+          <span
+            className="text-[9px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center"
+            style={
+              isCompleted
+                ? { backgroundColor: '#4bce9715', color: '#4bce9799', border: '1px solid #4bce9730' }
+                : { backgroundColor: `${stage.color}22`, color: stage.color, border: `1px solid ${stage.color}44` }
+            }
+          >
+            {loans.length}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Expanded view ──────────────────────────────────────────────────────────
   return (
     <div
       ref={setNodeRef}
-      className={`min-w-[260px] max-w-[260px] rounded-lg mx-2 flex flex-col transition-colors duration-150 ${
+      className={`min-w-[260px] max-w-[260px] rounded-lg mx-2 flex flex-col transition-all duration-200 ${
         isDraggingIntoThis
           ? 'bg-[#2c3a47] ring-2 ring-inset ring-[#579dff]/40'
           : isCompleted
@@ -250,6 +332,33 @@ export function StageColumn({
             >
               📊
             </button>
+          )}
+
+          {/* Collapse toggle button */}
+          <button
+            onClick={onToggleCollapse}
+            className="w-5 h-5 flex items-center justify-center rounded text-[#5a6878] hover:text-[#b6c2cf] hover:bg-[#3d4b5c] transition-colors"
+            title="Collapse column"
+            aria-label="Collapse column"
+          >
+            <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+              <path d="M7.5 3l-3 3 3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* SLA overdue clock icon */}
+          {overdueLoans.length > 0 && (
+            <span
+              title={`${overdueLoans.length} loan${overdueLoans.length === 1 ? '' : 's'} past expected stage duration`}
+              className="flex items-center justify-center text-[#f5cd47] flex-shrink-0"
+              aria-label={`${overdueLoans.length} loan(s) past expected stage duration`}
+            >
+              <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+                <circle cx="6" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.15"/>
+                <path d="M6 4.5v2.25l1.5 1" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.5 1.5h3" stroke="currentColor" strokeWidth="1.15" strokeLinecap="round"/>
+              </svg>
+            </span>
           )}
 
           <span
@@ -321,6 +430,7 @@ export function StageColumn({
                 onBulkToggle={onBulkToggle}
                 isStarred={starOverrides?.has(loan.id) ? starOverrides.get(loan.id) : loan.isStarred}
                 onStarToggled={onStarToggled}
+                onMovedToStage={onMovedToStage}
               />
             ))
         )}

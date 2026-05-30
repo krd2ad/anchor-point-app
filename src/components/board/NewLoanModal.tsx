@@ -117,7 +117,6 @@ export function NewLoanModal({ onClose }: NewLoanModalProps) {
               className="w-full bg-[#1d2125] border border-[#3d4b5c] rounded-md px-3 py-2 text-sm text-[#e8ecf0] focus:outline-none focus:border-[#579dff] transition-colors appearance-none"
             >
               <option value="APL">APL — Anchor Point Lending</option>
-              <option value="APG">APG — Anchor Point Group</option>
             </select>
           </div>
 

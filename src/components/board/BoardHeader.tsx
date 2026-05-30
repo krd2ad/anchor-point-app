@@ -30,6 +30,7 @@ interface BoardHeaderProps {
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
   onOpenCommandPalette?: () => void;
+  onShowShortcuts?: () => void;
 }
 
 export function BoardHeader({
@@ -47,6 +48,7 @@ export function BoardHeader({
   theme = 'dark',
   onToggleTheme,
   onOpenCommandPalette,
+  onShowShortcuts,
 }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
   const [bellOpen, setBellOpen] = useState(false);
@@ -251,6 +253,18 @@ export function BoardHeader({
             +
           </button>
         </div>
+
+        {/* Keyboard shortcuts button */}
+        {onShowShortcuts && (
+          <button
+            onClick={onShowShortcuts}
+            title="Keyboard shortcuts (?)"
+            className="w-8 h-8 flex items-center justify-center rounded-md font-semibold text-[#7a8899] hover:text-[#b6c2cf] hover:bg-[#282e33] transition-colors text-sm select-none"
+            aria-label="Keyboard shortcuts"
+          >
+            ?
+          </button>
+        )}
 
         {/* Avatars */}
         <div className="flex items-center gap-1">

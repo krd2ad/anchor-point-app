@@ -111,7 +111,7 @@ function PipelineBar({ loans }: { loans: Loan[] }) {
 // ─── Portfolio by Entity ───────────────────────────────────────────────────────
 
 function EntityTable({ loans }: { loans: Loan[] }) {
-  const entities = ['APL', 'APG'] as const;
+  const entities = ['APL'] as const;
 
   const rows = entities.map((entity) => {
     const subset = loans.filter((l) => l.lendingEntity === entity);
@@ -207,6 +207,176 @@ function RiskBreakdown({ loans }: { loans: Loan[] }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Pipeline Velocity ────────────────────────────────────────────────────────
+
+function PipelineVelocity({ loans }: { loans: Loan[] }) {
+  const activeStages = STAGES.slice(0, 7); // stages 1–7
+
+  const rows = activeStages.map((stage) => {
+    const stageLoans = loans.filter((l) => l.stageId === stage.id);
+    if (stageLoans.length === 0) return { stage, avg: null };
+    const days = stageLoans.map((l) =>
+      Math.floor((Date.now() - new Date(l.updatedAt).getTime()) / 86400000),
+    );
+    const avg = Math.floor(days.reduce((s, d) => s + d, 0) / days.length);
+    return { stage, avg };
+  });
+
+  const maxAvg = Math.max(...rows.map((r) => r.avg ?? 0), 1);
+
+  return (
+    <div className="bg-[#282e33] rounded-xl p-5 border border-[#3d4b5c]">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-[#e8ecf0]">Pipeline Velocity</h3>
+        <p className="text-[11px] text-[#7a8899] mt-0.5">
+          Average days per stage (based on last update)
+        </p>
+      </div>
+      <div className="flex flex-col gap-2.5">
+        {rows.map(({ stage, avg }) => (
+          <div key={stage.id} className="flex items-center gap-3">
+            {/* Stage name */}
+            <span
+              className="text-[11px] font-medium text-[#b6c2cf] w-36 flex-shrink-0 truncate"
+              title={stage.name}
+            >
+              {stage.name}
+            </span>
+            {/* Bar */}
+            <div className="flex-1 h-5 bg-[#1d2125] rounded overflow-hidden">
+              {avg !== null ? (
+                <div
+                  className="h-full rounded transition-all"
+                  style={{
+                    width: `${Math.max((avg / maxAvg) * 100, 2)}%`,
+                    backgroundColor: stage.color + '99', // ~60% opacity
+                  }}
+                />
+              ) : null}
+            </div>
+            {/* Label */}
+            <span className="text-[11px] font-medium tabular-nums w-14 text-right flex-shrink-0 text-[#7a8899]">
+              {avg !== null ? `${avg}d avg` : '—'}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Concentration Risk ────────────────────────────────────────────────────────
+
+interface ConcentrationWarning {
+  key: string;
+  message: string;
+}
+
+function ConcentrationRisk({ loans }: { loans: Loan[] }) {
+  const warnings: ConcentrationWarning[] = [];
+  const totalValue = loans.reduce((s, l) => s + l.loanAmount, 0);
+  if (totalValue === 0) return null;
+
+  // 1. Entity concentration (single entity > 80% — N/A now all APL, kept for future)
+  for (const entity of ['APL'] as const) {
+    const entityValue = loans
+      .filter(l => l.lendingEntity === entity)
+      .reduce((s, l) => s + l.loanAmount, 0);
+    const pct = entityValue / totalValue;
+    if (pct > 0.8) {
+      warnings.push({
+        key: `entity-${entity}`,
+        message: `${entity} holds ${(pct * 100).toFixed(0)}% of portfolio value (${fmtMoney(entityValue)} of ${fmtMoney(totalValue)}) — entity concentration risk`,
+      });
+    }
+  }
+
+  // 2. Stage concentration: > 50% of active loans in one stage
+  const activeLoans = loans.filter(l => l.stageId !== 'stage-8');
+  if (activeLoans.length > 0) {
+    const stageCounts = new Map<string, number>();
+    for (const l of activeLoans) {
+      stageCounts.set(l.stageId, (stageCounts.get(l.stageId) ?? 0) + 1);
+    }
+    for (const [stageId, count] of stageCounts) {
+      const pct = count / activeLoans.length;
+      if (pct > 0.5) {
+        const stageName = STAGES.find(s => s.id === stageId)?.name ?? stageId;
+        warnings.push({
+          key: `stage-${stageId}`,
+          message: `${count} of ${activeLoans.length} active loans (${(pct * 100).toFixed(0)}%) are in "${stageName}" — stage concentration risk`,
+        });
+      }
+    }
+  }
+
+  // 3. Single-loan concentration: any single loan > 30% of total portfolio
+  for (const loan of loans) {
+    const pct = loan.loanAmount / totalValue;
+    if (pct > 0.3) {
+      warnings.push({
+        key: `loan-${loan.id}`,
+        message: `"${loan.displayLabel}" represents ${(pct * 100).toFixed(0)}% of portfolio value (${fmtMoney(loan.loanAmount)} of ${fmtMoney(totalValue)}) — single-loan concentration risk`,
+      });
+    }
+  }
+
+  return (
+    <div className="bg-[#282e33] rounded-xl p-5 border border-[#3d4b5c]">
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold text-[#e8ecf0]">Concentration Risk</h3>
+        <p className="text-[11px] text-[#7a8899] mt-0.5">
+          Flags when any single entity, stage, or loan dominates the portfolio
+        </p>
+      </div>
+
+      {warnings.length === 0 ? (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#4bce97]/10 border border-[#4bce97]/25">
+          <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5 text-[#4bce97] flex-shrink-0">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
+            <path d="M4.5 7l1.75 1.75L9.5 5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[12px] font-medium text-[#4bce97]">
+            No concentration risks detected
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {warnings.map(w => (
+            <div
+              key={w.key}
+              className="flex items-start gap-2.5 px-3 py-2.5 rounded-md border"
+              style={{
+                backgroundColor: 'rgba(245,205,71,0.07)',
+                borderColor: 'rgba(245,205,71,0.35)',
+              }}
+            >
+              {/* Amber warning icon */}
+              <svg
+                viewBox="0 0 14 14"
+                fill="none"
+                className="w-3.5 h-3.5 flex-shrink-0 mt-px"
+                style={{ color: '#f5cd47' }}
+              >
+                <path
+                  d="M7 1.5L13 12H1L7 1.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+                <path d="M7 5.5v3M7 10h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+              <p className="text-[11px] leading-snug" style={{ color: '#d4aa30' }}>
+                {w.message}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -328,8 +498,6 @@ const HEAT_CONFIG: Record<string, { border: string; bg: string; label: string }>
   medium:   { border: '#eab308', bg: 'rgba(234,179,8,0.08)',    label: 'Medium' },
   low:      { border: '#166534', bg: 'rgba(22,101,52,0.10)',    label: 'Low' },
 };
-
-const RISK_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 function HeatMap({ loans, onSelectLoan }: { loans: Loan[]; onSelectLoan: (id: string) => void }) {
   const stageMap = new Map(STAGES.map(s => [s.id, s]));
@@ -468,10 +636,16 @@ export function AnalyticsView({ onSelectLoanAndSwitchToBoard }: AnalyticsViewPro
           <RiskBreakdown loans={loans} />
         </div>
 
-        {/* ── Row 4: Loan table ──────────────────────────────────────────────── */}
+        {/* ── Row 4: Pipeline Velocity ───────────────────────────────────────── */}
+        <PipelineVelocity loans={loans} />
+
+        {/* ── Row 5: Concentration Risk ──────────────────────────────────────── */}
+        <ConcentrationRisk loans={loans} />
+
+        {/* ── Row 6: Loan table ──────────────────────────────────────────────── */}
         <LoanTable loans={loans} onSelectLoan={onSelectLoanAndSwitchToBoard} />
 
-        {/* ── Row 5: Portfolio heat map ───────────────────────────────────────── */}
+        {/* ── Row 7: Portfolio heat map ───────────────────────────────────────── */}
         <HeatMap loans={loans} onSelectLoan={onSelectLoanAndSwitchToBoard} />
       </div>
     </div>

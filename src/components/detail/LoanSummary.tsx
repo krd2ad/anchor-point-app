@@ -27,6 +27,50 @@ function GridItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+function InterestAccruedItem({ loan }: { loan: import('../../types').Loan }) {
+  if (!loan.fundedDate) return null;
+  const daysFunded = Math.floor(
+    (Date.now() - new Date(loan.fundedDate).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const dailyInterest = (loan.currentBalance * (loan.interestRate / 100)) / 365;
+  const totalAccrued = dailyInterest * daysFunded;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wider text-[#7a8899]">Interest Accrued</span>
+      <span className="text-sm font-semibold text-[#f5cd47]">
+        {totalAccrued.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+      </span>
+      <span className="text-[10px] text-[#7a8899]">
+        over {daysFunded} day{daysFunded !== 1 ? 's' : ''} at {loan.interestRate.toFixed(2)}%
+      </span>
+    </div>
+  );
+}
+
+function MaturityDateItem({ closingDate }: { closingDate: string | null }) {
+  if (!closingDate) return null;
+  const closing = new Date(closingDate);
+  const maturity = new Date(closing);
+  maturity.setMonth(maturity.getMonth() + 12);
+  const formatted = maturity.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const daysUntil = Math.floor((maturity.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  const isNear = daysUntil <= 60;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wider text-[#7a8899]">Maturity Date</span>
+      <span className={`text-sm font-semibold ${isNear ? 'text-[#f87168]' : 'text-[#e8ecf0]'}`}>
+        {formatted}
+      </span>
+      {isNear && daysUntil >= 0 && (
+        <span className="text-[10px] text-[#f87168]">{daysUntil}d remaining</span>
+      )}
+      {daysUntil < 0 && (
+        <span className="text-[10px] text-[#f87168]">Past maturity</span>
+      )}
+    </div>
+  );
+}
+
 const RISK_META: Record<StateRiskBucket, { label: string; color: string }> = {
   low:     { label: 'Low Fcl Risk',     color: '#4bce97' },
   medium:  { label: 'Med Fcl Risk',     color: '#f5cd47' },
@@ -59,14 +103,8 @@ export function LoanSummary({ loan, borrowerEntity, principal, parcels }: LoanSu
         <h2 className="text-base font-bold text-[#e8ecf0] flex-1 leading-snug min-w-0">
           {loan.displayLabel}
         </h2>
-        <span
-          className={`flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded ${
-            loan.lendingEntity === 'APL'
-              ? 'bg-[#579dff]/20 text-[#579dff] border border-[#579dff]/40'
-              : 'bg-[#9f8fef]/20 text-[#9f8fef] border border-[#9f8fef]/40'
-          }`}
-        >
-          {loan.lendingEntity}
+        <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded bg-[#579dff]/20 text-[#579dff] border border-[#579dff]/40">
+          APL
         </span>
       </div>
 
@@ -93,6 +131,8 @@ export function LoanSummary({ loan, borrowerEntity, principal, parcels }: LoanSu
         <GridItem label="Payment Due"     value={`${loan.paymentDueDay}${loan.paymentDueDay === 1 ? 'st' : 'th'} of Month`} />
         <GridItem label="Servicer"        value={loan.servicer} />
         {titleParty && <GridItem label="Title Co." value={titleParty.name} />}
+        <InterestAccruedItem loan={loan} />
+        <MaturityDateItem closingDate={loan.closingDate} />
       </div>
 
       {/* Dates */}

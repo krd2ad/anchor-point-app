@@ -1,5 +1,5 @@
 export interface BoardFilters {
-  entity: 'all' | 'APL' | 'APG';
+  entity: 'all' | 'APL';
   risk: 'all' | 'medium' | 'high' | 'critical';
   hasUnmetGates: boolean;
 }
@@ -46,7 +46,7 @@ function Pill({ active, activeClass, onClick, children }: PillProps) {
 export function FilterBar({ filters, onChange, onClear }: FilterBarProps) {
   const active = filtersAreActive(filters);
 
-  function toggleEntity(val: 'APL' | 'APG') {
+  function toggleEntity(val: 'APL') {
     onChange({ ...filters, entity: filters.entity === val ? 'all' : val });
   }
 
@@ -68,14 +68,6 @@ export function FilterBar({ filters, onChange, onClear }: FilterBarProps) {
       >
         APL only
       </Pill>
-      <Pill
-        active={filters.entity === 'APG'}
-        activeClass="bg-[#579dff]/20 border-[#579dff]/60 text-[#579dff]"
-        onClick={() => toggleEntity('APG')}
-      >
-        APG only
-      </Pill>
-
       {/* Separator */}
       <span className="w-px h-4 bg-[#3d4b5c] flex-shrink-0" />
 

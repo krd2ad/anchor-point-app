@@ -5,6 +5,7 @@ import { useLoanService } from '../../context/LoanServiceProvider';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore } from '../../lib/riskScore';
+import { dueActions } from '../../lib/dates';
 
 interface LoanCardProps {
   loan: Loan;
@@ -17,6 +18,7 @@ interface LoanCardProps {
   onBulkToggle?: (id: string) => void;
   isStarred?: boolean;
   onStarToggled?: (loan: Loan) => void;
+  onMovedToStage?: (loanId: string, newStageId: string) => void;
 }
 
 function formatAmount(amount: number): string {
@@ -36,7 +38,7 @@ for (const step of STAGE_STEPS) {
   }
 }
 
-export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false, isBulkSelected = false, onBulkToggle, isStarred: isStarredProp, onStarToggled }: LoanCardProps) {
+export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false, isBulkSelected = false, onBulkToggle, isStarred: isStarredProp, onStarToggled, onMovedToStage }: LoanCardProps) {
   const service = useLoanService();
   const [doneCount, setDoneCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -93,6 +95,23 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
 
   const risk = loanRiskScore(loan);
 
+  // Overdue payment indicator (Item 2)
+  const today = new Date().toISOString().split('T')[0];
+  const hasDueAction = dueActions(activeStageId, loan.firstPaymentDate ?? null, today).length > 0;
+
+  // Next-stage computation (Item 1)
+  const currentOrder = STAGES.find(s => s.id === activeStageId)?.order ?? 0;
+  const nextStage = STAGES.find(s => s.order === currentOrder + 1);
+  const canMoveNext = !isComplete && nextStage !== undefined;
+
+  function handleMoveNext(e: MouseEvent) {
+    e.stopPropagation();
+    if (!nextStage) return;
+    service.moveLoanToStage(loan.id, nextStage.id).then(() => {
+      onMovedToStage?.(loan.id, nextStage.id);
+    });
+  }
+
   function handleClick(e: MouseEvent) {
     if (e.shiftKey && onBulkToggle) {
       e.preventDefault();
@@ -116,7 +135,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
       {...attributes}
       onClick={handleClick}
       className={[
-        'group bg-[#22272b] border rounded-md p-3 mb-2 transition-all duration-100 select-none',
+        'group relative bg-[#22272b] border rounded-md p-3 mb-2 transition-all duration-100 select-none',
         isOverlay
           ? 'border-[#579dff] shadow-2xl cursor-grabbing rotate-1 opacity-95'
           : isDragging
@@ -134,6 +153,14 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
                       : 'border-[#454f59] hover:border-[#6b7a8d] cursor-grab',
       ].join(' ')}
     >
+      {/* Overdue payment indicator (Item 2) */}
+      {hasDueAction && !isOverlay && (
+        <span
+          className="w-2 h-2 rounded-full bg-amber-400 animate-pulse absolute top-2 right-2"
+          title="Payment action due"
+        />
+      )}
+
       {/* Top row: label + badges */}
       <div className="flex items-start gap-1.5 mb-1">
         {/* Stage color dot */}
@@ -186,12 +213,9 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
       </div>
 
       {/* Amount + entity badge */}
-      <div className="flex items-center justify-between mb-1 pl-3">
+      <div className="flex items-center mb-1 pl-3">
         <span className="text-[#b6c2cf] text-xs font-mono">
           {formatAmount(loan.loanAmount)}
-        </span>
-        <span className="text-[#8c9bab] text-[10px] bg-[#2d3748] border border-[#454f59] rounded-full px-2 py-0.5 font-medium">
-          {loan.lendingEntity}
         </span>
       </div>
 
@@ -242,6 +266,22 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
             <div className="flex-1" />
           )}
           <DaysInStageBadge updatedAt={loan.updatedAt} />
+        </div>
+      )}
+
+      {/* Quick-move strip (Item 1) — only visible on card hover */}
+      {!isOverlay && canMoveNext && (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-2 pt-1.5 border-t border-[#3d4b5c] flex items-center gap-1">
+          <button
+            onClick={handleMoveNext}
+            className="flex items-center gap-1 text-[10px] text-[#5d6f7e] hover:text-[#8c9bab] transition-colors rounded px-1 py-0.5 hover:bg-[#2d3748]"
+            title={`Move to ${nextStage?.name}`}
+          >
+            <svg viewBox="0 0 10 10" fill="none" className="w-2.5 h-2.5 flex-shrink-0">
+              <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {nextStage?.name}
+          </button>
         </div>
       )}
     </div>

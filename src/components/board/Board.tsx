@@ -25,6 +25,7 @@ import { BulkActionBar } from './BulkActionBar';
 import { NewLoanModal } from './NewLoanModal';
 import { LoanCompareModal } from './LoanCompareModal';
 import { PrintView } from './PrintView';
+import { KeyboardShortcutsModal } from '../shared/KeyboardShortcutsModal';
 import { loanRiskScore } from '../../lib/riskScore';
 import type { Loan } from '../../types';
 
@@ -131,6 +132,28 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const [selectedLoanIds, setSelectedLoanIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const allCollapsed = collapsedStages.size === STAGES.length;
+  const handleToggleCollapse = useCallback((stageId: string) => {
+    setCollapsedStages(prev => {
+      const next = new Set(prev);
+      if (next.has(stageId)) {
+        next.delete(stageId);
+      } else {
+        next.add(stageId);
+      }
+      return next;
+    });
+  }, []);
+  const handleCollapseAll = useCallback(() => {
+    if (allCollapsed) {
+      setCollapsedStages(new Set());
+    } else {
+      setCollapsedStages(new Set(STAGES.map(s => s.id)));
+    }
+  }, [allCollapsed]);
 
   // Keyboard navigation state
   const [keyboardFocusedLoanId, setKeyboardFocusedLoanId] = useState<string | null>(null);
@@ -202,6 +225,13 @@ export function Board({ currentView, onViewChange }: BoardProps) {
       if (pendingDrag) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT') return;
+
+      // ? key opens keyboard shortcuts modal (only when no modal is open)
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !showShortcuts) {
+        e.preventDefault();
+        setShowShortcuts(true);
+        return;
+      }
 
       const isPanelOpen = selectedLoanId !== null;
 
@@ -301,6 +331,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     clearSelection,
     showNewLoanModal,
     pendingDrag,
+    showShortcuts,
   ]);
 
   const sensors = useSensors(
@@ -402,6 +433,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
             theme={theme}
             onToggleTheme={toggleTheme}
             onOpenCommandPalette={openCommandPalette}
+            onShowShortcuts={() => setShowShortcuts(true)}
           />
 
           {currentView === 'board' && (
@@ -409,11 +441,29 @@ export function Board({ currentView, onViewChange }: BoardProps) {
           )}
 
           {currentView === 'board' && (
-            <FilterBar
-              filters={filters}
-              onChange={setFilters}
-              onClear={() => setFilters(DEFAULT_FILTERS)}
-            />
+            <div className="flex items-center gap-0">
+              <FilterBar
+                filters={filters}
+                onChange={setFilters}
+                onClear={() => setFilters(DEFAULT_FILTERS)}
+              />
+              <div className="ml-auto pr-4 flex-shrink-0">
+                <button
+                  onClick={handleCollapseAll}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-[#454f59] text-[#5d6f7e] hover:border-[#6b7a8d] hover:text-[#8c9bab] transition-all duration-100 leading-none whitespace-nowrap"
+                  title={allCollapsed ? 'Expand all columns' : 'Collapse all columns'}
+                >
+                  <svg viewBox="0 0 12 12" fill="none" className="w-2.5 h-2.5">
+                    {allCollapsed ? (
+                      <path d="M2 4l3 3 3-3M2 8h8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    ) : (
+                      <path d="M2 8l3-3 3 3M2 4h8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                    )}
+                  </svg>
+                  {allCollapsed ? 'Expand all' : 'Collapse all'}
+                </button>
+              </div>
+            </div>
           )}
 
           <div className="flex-1 overflow-x-auto">
@@ -465,6 +515,13 @@ export function Board({ currentView, onViewChange }: BoardProps) {
                     hiddenCount={hiddenCount}
                     starOverrides={starOverrides}
                     onStarToggled={handleStarToggled}
+                    onMovedToStage={(loanId, stageId) => {
+                      setStageOverrides(prev => new Map(prev).set(loanId, stageId));
+                      service.moveLoanToStage(loanId, stageId);
+                      showToast(`Moved to ${STAGES.find(s => s.id === stageId)?.name}`, 'success');
+                    }}
+                    collapsed={collapsedStages.has(stage.id)}
+                    onToggleCollapse={() => handleToggleCollapse(stage.id)}
                   />
                 );
               })}
@@ -509,6 +566,11 @@ export function Board({ currentView, onViewChange }: BoardProps) {
           loanIds={[...selectedLoanIds]}
           onClose={() => setShowCompareModal(false)}
         />
+      )}
+
+      {/* Keyboard shortcuts modal */}
+      {showShortcuts && (
+        <KeyboardShortcutsModal onClose={() => setShowShortcuts(false)} />
       )}
 
       {/* Hidden on screen; visible only when printing */}

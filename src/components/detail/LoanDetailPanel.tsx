@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { LoanDetail, Comment, StageChangeEvent } from '../../types';
-import { useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
+import { useSelectedLoan, useLoanService, useLoans } from '../../context/LoanServiceProvider';
 import { LoanSummary } from './LoanSummary';
+import { LoanHealthStrip } from './LoanHealthStrip';
 import { StageStepChecklist } from './StageStepChecklist';
 import { StageSwitcher } from './StageSwitcher';
 import { CommentList } from './CommentList';
@@ -9,8 +10,13 @@ import { CommentComposer } from './CommentComposer';
 import { AttachmentList } from './AttachmentList';
 import { ActivityTimeline } from './ActivityTimeline';
 import { LoanNote } from './LoanNote';
+import { UnderwritingWidget } from './UnderwritingWidget';
+import { StageJourney } from './StageJourney';
 import { PaymentCalendar } from './PaymentCalendar';
+import { DrawProgramWidget } from './DrawProgramWidget';
+import { LoanSummarySheet } from './LoanSummarySheet';
 import { dueActions } from '../../lib/dates';
+import { STAGES } from '../../data/stages';
 
 function Divider() {
   return <div className="border-t border-[#3d4b5c]" />;
@@ -29,8 +35,28 @@ interface LoanDetailPanelProps {
 }
 
 export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
-  const { selectedLoanId, clearSelection } = useSelectedLoan();
+  const { selectedLoanId, selectLoan, clearSelection } = useSelectedLoan();
   const service = useLoanService();
+  const { loans } = useLoans();
+
+  // Sorted loan IDs for prev/next navigation (stage order, then displayLabel)
+  const sortedLoanIds = [...loans]
+    .sort((a, b) => {
+      const so = STAGES.findIndex(s => s.id === a.stageId) - STAGES.findIndex(s => s.id === b.stageId);
+      return so !== 0 ? so : a.displayLabel.localeCompare(b.displayLabel);
+    })
+    .map(l => l.id);
+
+  const currentIndex = selectedLoanId ? sortedLoanIds.indexOf(selectedLoanId) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < sortedLoanIds.length - 1;
+
+  function handlePrev() {
+    if (hasPrev) selectLoan(sortedLoanIds[currentIndex - 1]);
+  }
+  function handleNext() {
+    if (hasNext) selectLoan(sortedLoanIds[currentIndex + 1]);
+  }
 
   const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
   const [loading, setLoading]       = useState(false);
@@ -42,6 +68,8 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
   const [replyPrefix, setReplyPrefix] = useState<string | undefined>(undefined);
   // Star state (separate so it can be toggled without re-fetching full detail)
   const [isStarred, setIsStarred]   = useState(false);
+  // Summary sheet state
+  const [showSummarySheet, setShowSummarySheet] = useState(false);
 
   const handleReply = useCallback((prefix: string) => {
     setReplyPrefix(prefix);
@@ -103,6 +131,15 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
 
   return (
     <>
+      {/* Summary sheet modal */}
+      {showSummarySheet && loanDetail && (
+        <LoanSummarySheet
+          loanDetail={loanDetail}
+          stageHistory={stageHistory}
+          onClose={() => setShowSummarySheet(false)}
+        />
+      )}
+
       {/* Semi-transparent overlay */}
       <div
         className="fixed inset-0 bg-black/40 z-40"
@@ -116,9 +153,63 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
         }`}
       >
         {/* Panel header with close button */}
-        <div className="flex items-center justify-between p-4 sticky top-0 bg-[#282e33] z-10 border-b border-[#3d4b5c]">
-          <h2 className="text-sm font-semibold text-[#e8ecf0]">Loan Detail</h2>
+        <div className="flex items-center justify-between px-4 py-2.5 sticky top-0 bg-[#282e33] z-10 border-b border-[#3d4b5c]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[#e8ecf0]">Loan Detail</h2>
+            {/* Prev / Next navigation */}
+            {sortedLoanIds.length > 1 && currentIndex >= 0 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handlePrev}
+                  disabled={!hasPrev}
+                  className={`w-6 h-6 flex items-center justify-center rounded transition-colors text-[11px] ${
+                    hasPrev
+                      ? 'text-[#8c9bab] hover:text-[#e8ecf0] hover:bg-[#3d4b5c]'
+                      : 'text-[#3d4b5c] cursor-not-allowed'
+                  }`}
+                  aria-label="Previous loan"
+                  title="Previous loan"
+                >
+                  <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+                    <path d="M7.5 2.5l-4 3.5 4 3.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <span className="text-[10px] text-[#5d6f7e] tabular-nums">
+                  {currentIndex + 1}/{sortedLoanIds.length}
+                </span>
+                <button
+                  onClick={handleNext}
+                  disabled={!hasNext}
+                  className={`w-6 h-6 flex items-center justify-center rounded transition-colors ${
+                    hasNext
+                      ? 'text-[#8c9bab] hover:text-[#e8ecf0] hover:bg-[#3d4b5c]'
+                      : 'text-[#3d4b5c] cursor-not-allowed'
+                  }`}
+                  aria-label="Next loan"
+                  title="Next loan"
+                >
+                  <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3">
+                    <path d="M4.5 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-1">
+            {/* Summary sheet button */}
+            {loanDetail && (
+              <button
+                onClick={() => setShowSummarySheet(true)}
+                className="w-7 h-7 flex items-center justify-center rounded-md transition-colors text-[#7a8899] hover:text-[#e8ecf0] hover:bg-[#3d4b5c]"
+                aria-label="Open loan summary sheet"
+                title="Summary sheet"
+              >
+                <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+                  <rect x="3" y="1.5" width="10" height="13" rx="1.25" stroke="currentColor" strokeWidth="1.25"/>
+                  <path d="M5.5 5h5M5.5 7.5h5M5.5 10h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+                </svg>
+              </button>
+            )}
             {/* Star button */}
             <button
               onClick={handleToggleStar}
@@ -158,6 +249,9 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
           <Spinner />
         ) : (
           <div className="flex-1">
+            {/* Health strip — risk, LTV, docs, autopay */}
+            <LoanHealthStrip loan={loanDetail.loan} />
+
             {/* Due actions banner */}
             {(() => {
               const today = new Date().toISOString().split('T')[0];
@@ -181,6 +275,14 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
 
             {/* Payment calendar — servicing/collecting/special-servicing loans */}
             <PaymentCalendar loan={loanDetail.loan} />
+
+            {/* Draw program tracker — only for loans with hasDrawProgram */}
+            {loanDetail.loan.hasDrawProgram && (
+              <>
+                <DrawProgramWidget loanId={loanDetail.loan.id} loan={loanDetail.loan} />
+                <Divider />
+              </>
+            )}
 
             {/* Summary */}
             <LoanSummary
@@ -209,6 +311,14 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
             <LoanNote loanId={loanDetail.loan.id} />
 
             <Divider />
+
+            {/* Underwriting quick view — stage-1 and stage-2 only */}
+            {(loanDetail.loan.stageId === 'stage-1' || loanDetail.loan.stageId === 'stage-2') && (
+              <>
+                <UnderwritingWidget loanId={loanDetail.loan.id} />
+                <Divider />
+              </>
+            )}
 
             {/* Stage switcher (all 7 stages, browsable) */}
             <StageSwitcher
@@ -244,6 +354,11 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
 
             {/* Attachments */}
             <AttachmentList attachments={loanDetail.attachments} onOpenInFiles={onOpenInFiles} />
+
+            <Divider />
+
+            {/* Stage journey visualization */}
+            <StageJourney loan={loanDetail.loan} stageHistory={stageHistory} />
 
             <Divider />
 

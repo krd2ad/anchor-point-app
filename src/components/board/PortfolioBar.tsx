@@ -1,4 +1,5 @@
 import { STAGES } from '../../data/stages';
+import { loanRiskScore } from '../../lib/riskScore';
 import type { Loan } from '../../types';
 
 interface PortfolioBarProps {
@@ -49,6 +50,19 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
       : avgLtv > 60
       ? '#f5cd47'
       : '#4bce97';
+
+
+  // Portfolio health score (0-100)
+  let healthScore = 100;
+  for (const loan of loans) {
+    const { level } = loanRiskScore(loan);
+    if (level === 'critical') healthScore -= 20;
+    else if (level === 'high') healthScore -= 10;
+    if ((loan.computedLtv ?? 0) > 0.70) healthScore -= 5;
+    if (loan.stageId === 'stage-8') healthScore += 5;
+  }
+  healthScore = Math.max(0, Math.min(100, healthScore));
+  const healthColor = healthScore >= 80 ? '#4bce97' : healthScore >= 60 ? '#f5cd47' : '#f87168';
 
   return (
     <div className="bg-[#161a1d] border-b border-[#2d3748] px-4 py-1.5 text-[11px] flex items-center gap-6 flex-shrink-0 overflow-x-auto">
@@ -111,6 +125,16 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
             <span className="font-bold text-[#b6c2cf]">{count}</span>
           </span>
         ))}
+      </span>
+
+      {DIVIDER}
+
+      {/* Portfolio health score */}
+      <span className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="text-[#7a8899]">Health</span>
+        <span className="font-bold tabular-nums" style={{ color: healthColor }}>
+          {healthScore}/100
+        </span>
       </span>
     </div>
   );

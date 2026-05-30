@@ -1,6 +1,7 @@
 import type { Loan } from '../../types';
 import { loanRiskScore, type RiskLevel } from '../../lib/riskScore';
 import { STAGES } from '../../data/stages';
+import { useFileTree } from '../../context/LoanServiceProvider';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,20 @@ export function LoanHealthStrip({ loan }: LoanHealthStripProps) {
   const risk = loanRiskScore(loan);
   const riskCfg = RISK_COLORS[risk.level];
   const stage = STAGES.find((s) => s.id === loan.stageId);
+
+  // Document completeness from the file tree
+  const { attachments } = useFileTree();
+  const loanAttachments = attachments.filter(a => a.loanId === loan.id);
+  const verifiedCount = loanAttachments.filter(a => a.status === 'verified').length;
+  const totalDocs = loanAttachments.length;
+  const docsColor =
+    totalDocs === 0
+      ? '#5d6f7e'
+      : verifiedCount === totalDocs
+        ? '#4bce97'
+        : loanAttachments.some(a => a.status === 'requested')
+          ? '#f5cd47'
+          : '#579dff';
 
   return (
     <div className="bg-[#1d2125] border-b border-[#3d4b5c] px-4 py-2 flex items-center gap-4 text-[11px]">
@@ -77,6 +92,16 @@ export function LoanHealthStrip({ loan }: LoanHealthStripProps) {
       >
         {loan.autoPayEnabled ? 'Auto Pay ✓' : 'Manual'}
       </span>
+
+      {/* Document completeness */}
+      {totalDocs > 0 && (
+        <span className="flex items-center gap-1 ml-auto">
+          <span className="text-[#5d6f7e]">Docs</span>
+          <span className="font-semibold tabular-nums" style={{ color: docsColor }}>
+            {verifiedCount}/{totalDocs}
+          </span>
+        </span>
+      )}
     </div>
   );
 }

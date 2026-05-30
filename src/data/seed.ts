@@ -214,7 +214,7 @@ export const SEED_LOANS: Loan[] = [
   {
     id: 'loan-3',
     stageId: 'stage-3',
-    lendingEntity: 'APG',
+    lendingEntity: 'APL',
     borrowerEntityId: 'entity-3',
     principalId: 'principal-3',
     parcelIds: ['parcel-3a', 'parcel-3b', 'parcel-3c'],
@@ -303,7 +303,7 @@ export const SEED_LOANS: Loan[] = [
   {
     id: 'loan-7',
     stageId: 'stage-7',
-    lendingEntity: 'APG',
+    lendingEntity: 'APL',
     borrowerEntityId: 'entity-7',
     principalId: 'principal-7',
     parcelIds: ['parcel-7a'],
