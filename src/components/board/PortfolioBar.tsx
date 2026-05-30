@@ -16,6 +16,21 @@ const DIVIDER = (
   <span className="w-px h-3 bg-[#3d4b5c] flex-shrink-0" />
 );
 
+function Tip({ children, tip }: { children: React.ReactNode; tip: React.ReactNode }) {
+  return (
+    <span className="relative group/tip flex-shrink-0">
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
+        opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150
+        bg-[#22272b] border border-[#3d4b5c] rounded-md px-2.5 py-2 text-[11px] text-[#b6c2cf]
+        whitespace-nowrap shadow-xl min-w-max">
+        {tip}
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#3d4b5c]" />
+      </span>
+    </span>
+  );
+}
+
 // Stages 1-7 (not stage-8) with their color dots for the mini breakdown
 const ACTIVE_STAGES = STAGES.filter((s) => s.id !== 'stage-8');
 
@@ -34,7 +49,8 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
       : null;
 
   // Count of loans with LTV > 70%
-  const highLtvCount = loans.filter((l) => (l.computedLtv ?? 0) > 70).length;
+  const highLtvLoans = loans.filter((l) => (l.computedLtv ?? 0) > 0.70);
+  const highLtvCount = highLtvLoans.length;
 
   // Stage breakdown counts (stages 1-7)
   const stageCounts = ACTIVE_STAGES.map((stage) => ({
@@ -45,9 +61,9 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
   const ltvColor =
     avgLtv == null
       ? '#7a8899'
-      : avgLtv > 70
+      : avgLtv > 0.70
       ? '#f87168'
-      : avgLtv > 60
+      : avgLtv > 0.60
       ? '#f5cd47'
       : '#4bce97';
 
@@ -58,7 +74,7 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
     const { level } = loanRiskScore(loan);
     if (level === 'critical') healthScore -= 20;
     else if (level === 'high') healthScore -= 10;
-    if ((loan.computedLtv ?? 0) > 0.70) healthScore -= 5;
+    if ((loan.computedLtv ?? 0) > 0.70) healthScore -= 5; // already correct
     if (loan.stageId === 'stage-8') healthScore += 5;
   }
   healthScore = Math.max(0, Math.min(100, healthScore));
@@ -91,25 +107,45 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
       {DIVIDER}
 
       {/* Avg LTV */}
-      <span className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-[#7a8899]">Avg LTV</span>
-        <span className="font-bold" style={{ color: ltvColor }}>
-          {avgLtv != null ? `${avgLtv.toFixed(1)}%` : '—'}
+      <Tip tip={
+        <span className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#e8ecf0]">Average LTV</span>
+          <span>Loan-to-value across {ltvLoans.length} loans with valuations</span>
+          <span>Program max: <span className="text-[#f87168]">70%</span> · Target: <span className="text-[#4bce97]">≤65%</span></span>
         </span>
-      </span>
+      }>
+        <span className="flex items-center gap-1.5 cursor-default">
+          <span className="text-[#7a8899]">Avg LTV</span>
+          <span className="font-bold" style={{ color: ltvColor }}>
+            {avgLtv != null ? `${(avgLtv * 100).toFixed(1)}%` : '—'}
+          </span>
+        </span>
+      </Tip>
 
       {DIVIDER}
 
       {/* High LTV count */}
-      <span className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-[#7a8899]">LTV &gt;70%</span>
-        <span
-          className="font-bold"
-          style={{ color: highLtvCount > 0 ? '#f87168' : '#4bce97' }}
-        >
-          {highLtvCount}
+      <Tip tip={
+        <span className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#e8ecf0]">Loans Above Program Max LTV</span>
+          {highLtvCount > 0 ? (
+            highLtvLoans.map(l => (
+              <span key={l.id} className="text-[#f87168]">
+                {l.displayLabel.split('–')[0].trim()} — {((l.computedLtv ?? 0) * 100).toFixed(0)}%
+              </span>
+            ))
+          ) : (
+            <span className="text-[#4bce97]">All loans within 70% LTV limit</span>
+          )}
         </span>
-      </span>
+      }>
+        <span className="flex items-center gap-1.5 cursor-default">
+          <span className="text-[#7a8899]">LTV &gt;70%</span>
+          <span className="font-bold" style={{ color: highLtvCount > 0 ? '#f87168' : '#4bce97' }}>
+            {highLtvCount}
+          </span>
+        </span>
+      </Tip>
 
       {DIVIDER}
 
@@ -130,12 +166,26 @@ export function PortfolioBar({ loans }: PortfolioBarProps) {
       {DIVIDER}
 
       {/* Portfolio health score */}
-      <span className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-[#7a8899]">Health</span>
-        <span className="font-bold tabular-nums" style={{ color: healthColor }}>
-          {healthScore}/100
+      <Tip tip={
+        <span className="flex flex-col gap-0.5">
+          <span className="font-semibold text-[#e8ecf0]">Portfolio Health Score</span>
+          <span>Starts at 100 · deductions:</span>
+          <span>−20 per Critical-risk loan</span>
+          <span>−10 per High-risk loan</span>
+          <span>−5 per loan with LTV &gt;70%</span>
+          <span>+5 per Completed / Paid Off loan</span>
+          <span className="mt-0.5 font-semibold" style={{ color: healthColor }}>
+            Current: {healthScore}/100 ({healthScore >= 80 ? 'Good' : healthScore >= 60 ? 'Fair' : 'At Risk'})
+          </span>
         </span>
-      </span>
+      }>
+        <span className="flex items-center gap-1.5 cursor-default">
+          <span className="text-[#7a8899]">Health</span>
+          <span className="font-bold tabular-nums" style={{ color: healthColor }}>
+            {healthScore}/100
+          </span>
+        </span>
+      </Tip>
     </div>
   );
 }
