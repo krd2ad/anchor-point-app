@@ -11,13 +11,17 @@ import {
 import { STAGES } from '../../data/stages';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { useLoans, useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
+import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../shared/Toast';
 import { exportLoansAsCsv } from '../../lib/exportCsv';
+import { dueActions } from '../../lib/dates';
 import { BoardHeader, type AppView } from './BoardHeader';
+import { PortfolioBar } from './PortfolioBar';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
 import { BulkActionBar } from './BulkActionBar';
 import { NewLoanModal } from './NewLoanModal';
+import { PrintView } from './PrintView';
 import type { Loan } from '../../types';
 
 // Stage orders that require critical closing gates to be cleared
@@ -112,6 +116,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const { selectedLoanId, selectLoan, clearSelection } = useSelectedLoan();
   const service = useLoanService();
   const { showToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
 
   const [stageOverrides, setStageOverrides] = useState<Map<string, string>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -357,6 +362,16 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     );
   }
 
+  const today = new Date().toISOString().split('T')[0];
+  const dueActionsCount = loans.filter(
+    (l) => dueActions(l.stageId, l.firstPaymentDate, today).length > 0
+  ).length;
+  const dueActionItems = loans
+    .flatMap((l) => {
+      const actions = dueActions(l.stageId, l.firstPaymentDate, today);
+      return actions.map((a) => ({ label: l.displayLabel, reason: a.reason }));
+    });
+
   return (
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -366,7 +381,16 @@ export function Board({ currentView, onViewChange }: BoardProps) {
             currentView={currentView} onViewChange={onViewChange}
             onNewLoan={() => setShowNewLoanModal(true)}
             onExportCsv={() => exportLoansAsCsv(loans, STAGES)}
+            onPrint={() => window.print()}
+            dueActionsCount={dueActionsCount}
+            dueActionItems={dueActionItems}
+            theme={theme}
+            onToggleTheme={toggleTheme}
           />
+
+          {currentView === 'board' && (
+            <PortfolioBar loans={loans} />
+          )}
 
           <div className="flex-1 overflow-x-auto">
             <div ref={boardRef} className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }} tabIndex={-1}>
@@ -425,6 +449,9 @@ export function Board({ currentView, onViewChange }: BoardProps) {
         onMoveToStage={handleBulkMoveToStage}
         onClear={handleBulkClear}
       />
+
+      {/* Hidden on screen; visible only when printing */}
+      <PrintView />
     </>
   );
 }
