@@ -8,7 +8,7 @@ const AVATARS = [
   { initials: 'T', color: '#f87168' },
 ];
 
-export type AppView = 'board' | 'files';
+export type AppView = 'board' | 'files' | 'analytics';
 
 export interface DueActionItem {
   label: string;
@@ -29,6 +29,7 @@ interface BoardHeaderProps {
   dueActionItems?: DueActionItem[];
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onOpenCommandPalette?: () => void;
 }
 
 export function BoardHeader({
@@ -45,6 +46,7 @@ export function BoardHeader({
   dueActionItems = [],
   theme = 'dark',
   onToggleTheme,
+  onOpenCommandPalette,
 }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
   const [bellOpen, setBellOpen] = useState(false);
@@ -70,7 +72,7 @@ export function BoardHeader({
 
         {/* View tabs */}
         <nav className="flex items-center gap-1">
-          {(['board', 'files'] as AppView[]).map((v) => (
+          {(['board', 'files', 'analytics'] as AppView[]).map((v) => (
             <button
               key={v}
               onClick={() => onViewChange(v)}
@@ -100,6 +102,21 @@ export function BoardHeader({
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
             </svg>
             New Loan
+          </button>
+        )}
+
+        {/* Command palette hint button */}
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            title="Search loans (⌘K)"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] font-mono text-[#5d6f7e] hover:text-[#b6c2cf] bg-[#22272b] border border-[#3d4b5c] hover:border-[#5d6f7e] rounded-md transition-colors"
+          >
+            <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3">
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M9.5 9.5l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            ⌘K
           </button>
         )}
 

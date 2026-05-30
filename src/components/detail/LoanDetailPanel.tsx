@@ -7,6 +7,7 @@ import { StageSwitcher } from './StageSwitcher';
 import { CommentList } from './CommentList';
 import { CommentComposer } from './CommentComposer';
 import { AttachmentList } from './AttachmentList';
+import { ActivityTimeline } from './ActivityTimeline';
 import { dueActions } from '../../lib/dates';
 
 function Divider() {
@@ -198,6 +199,14 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
 
             {/* Attachments */}
             <AttachmentList attachments={loanDetail.attachments} onOpenInFiles={onOpenInFiles} />
+
+            <Divider />
+
+            {/* Activity timeline */}
+            <ActivityTimeline
+              comments={comments}
+              stepStatuses={loanDetail.stepStatuses}
+            />
           </div>
         )}
       </div>

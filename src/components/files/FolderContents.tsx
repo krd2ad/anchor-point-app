@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { FileTreeNode } from '../../lib/fileTree';
 import type { AttachmentCategory } from '../../types';
+import { useToast } from '../shared/Toast';
 
 // Expected docs per category — shown as hints in empty folders
 const CATEGORY_HINTS: Record<string, string[]> = {
@@ -85,6 +87,12 @@ function getBreadcrumb(node: FileTreeNode, tree: FileTreeNode[]): string[] {
 }
 
 export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderContentsProps) {
+  const { showToast } = useToast();
+  // Track which category folder row is being dragged over (loan node view)
+  const [dragOverCategory, setDragOverCategory] = useState<AttachmentCategory | null>(null);
+  // Track whether the category content drop zone is active
+  const [isDragOverContent, setIsDragOverContent] = useState(false);
+
   if (!node) {
     return (
       <div className="flex items-center justify-center h-full text-[#7a8899] text-sm italic p-8">
@@ -100,6 +108,47 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
   const loanId     = getLoanIdForNode(node, tree);
   const category   = node.kind === 'category' ? node.category : null;
   const hints      = category ? CATEGORY_HINTS[category] ?? [] : [];
+
+  // ── Drag helpers ──────────────────────────────────────────────────────────
+
+  function handleRowDragOver(e: React.DragEvent, cat: AttachmentCategory) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOverCategory(cat);
+  }
+
+  function handleRowDragLeave() {
+    setDragOverCategory(null);
+  }
+
+  function handleRowDrop(e: React.DragEvent, targetLoanId: string, cat: AttachmentCategory) {
+    e.preventDefault();
+    setDragOverCategory(null);
+    const filename = e.dataTransfer.files[0]?.name ?? 'Dropped Document';
+    onAddMock(targetLoanId, cat);
+    showToast(`File added (mock): ${filename}`, 'success');
+  }
+
+  function handleContentDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOverContent(true);
+  }
+
+  function handleContentDragLeave(e: React.DragEvent) {
+    // Only clear if leaving the drop zone entirely (not entering a child)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOverContent(false);
+    }
+  }
+
+  function handleContentDrop(e: React.DragEvent, targetLoanId: string, cat: AttachmentCategory) {
+    e.preventDefault();
+    setIsDragOverContent(false);
+    const filename = e.dataTransfer.files[0]?.name ?? 'Dropped Document';
+    onAddMock(targetLoanId, cat);
+    showToast(`File added (mock): ${filename}`, 'success');
+  }
 
   return (
     <div className="p-4 h-full flex flex-col">
@@ -124,11 +173,19 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
                 const allVerified = child.counts.verified === child.counts.total && child.counts.total > 0;
                 const anyRequested = child.counts.requested > 0;
                 const dotColor = child.counts.total === 0 ? '#3d4b5c' : allVerified ? '#4bce97' : anyRequested ? '#f5cd47' : '#6cc3e0';
+                const isOver = dragOverCategory === child.category;
                 return (
                   <button
                     key={child.id}
                     onClick={() => onFileSelect(child)}
-                    className="flex items-center gap-3 p-3 rounded-md bg-[#282e33] hover:bg-[#2d3748] border border-[#3d4b5c] text-left transition-colors"
+                    onDragOver={(e) => handleRowDragOver(e, child.category)}
+                    onDragLeave={handleRowDragLeave}
+                    onDrop={loanId ? (e) => handleRowDrop(e, loanId, child.category) : undefined}
+                    className={`flex items-center gap-3 p-3 rounded-md border text-left transition-colors ${
+                      isOver
+                        ? 'bg-[#579dff]/5 border-dashed border-[#579dff]/60'
+                        : 'bg-[#282e33] hover:bg-[#2d3748] border-[#3d4b5c]'
+                    }`}
                   >
                     <svg viewBox="0 0 16 16" fill="none" className="w-5 h-5 text-[#579dff] flex-shrink-0">
                       <path d="M1 4a1 1 0 011-1h4l1.5 1.5H14a1 1 0 011 1v6a1 1 0 01-1 1H2a1 1 0 01-1-1V4z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.1" />
@@ -137,6 +194,9 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
                       <p className="text-sm font-medium text-[#e8ecf0] truncate">{child.name}</p>
                       <p className="text-xs text-[#7a8899]">{child.counts.total} file{child.counts.total !== 1 ? 's' : ''}</p>
                     </div>
+                    {isOver && (
+                      <span className="text-xs text-[#579dff] flex-shrink-0 font-medium">Drop to add</span>
+                    )}
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
                     <span className="text-xs text-[#7a8899] flex-shrink-0">{child.counts.verified}/{child.counts.total}</span>
                   </button>
@@ -147,48 +207,70 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
 
           {/* Files in category view */}
           {node.kind === 'category' && (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-[#7a8899] border-b border-[#3d4b5c]">
-                  <th className="text-left pb-2 font-medium">Name</th>
-                  <th className="text-left pb-2 font-medium">Status</th>
-                  <th className="text-left pb-2 font-medium">Size</th>
-                  <th className="text-left pb-2 font-medium">Uploaded</th>
-                  <th className="text-left pb-2 font-medium">By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {children.map(child => {
-                  if (child.kind !== 'file') return null;
-                  const att = child.attachment;
-                  return (
-                    <tr
-                      key={child.id}
-                      onClick={() => onFileSelect(child)}
-                      className="border-b border-[#2d3748] hover:bg-[#282e33] cursor-pointer transition-colors"
-                    >
-                      <td className="py-2.5 pr-4">
-                        <div className="flex items-center gap-2">
-                          <FileTypeIcon fileType={att.fileType} />
-                          <div className="min-w-0">
-                            <p className="text-[#e8ecf0] truncate font-medium text-xs">{att.name}</p>
-                            <p className="text-[#7a8899] text-[10px] uppercase">{att.fileType}</p>
+            <div
+              className={`relative rounded-md transition-colors ${
+                isDragOverContent
+                  ? 'border-2 border-dashed border-[#579dff]/60 bg-[#579dff]/5'
+                  : 'border-2 border-transparent'
+              }`}
+              onDragOver={handleContentDragOver}
+              onDragLeave={handleContentDragLeave}
+              onDrop={loanId && category ? (e) => handleContentDrop(e, loanId, category) : undefined}
+            >
+              {isDragOverContent && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                  <div className="flex items-center gap-2 text-[#579dff] text-sm font-medium">
+                    <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+                      <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                    Drop to add file
+                  </div>
+                </div>
+              )}
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wider text-[#7a8899] border-b border-[#3d4b5c]">
+                    <th className="text-left pb-2 font-medium">Name</th>
+                    <th className="text-left pb-2 font-medium">Status</th>
+                    <th className="text-left pb-2 font-medium">Size</th>
+                    <th className="text-left pb-2 font-medium">Uploaded</th>
+                    <th className="text-left pb-2 font-medium">By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {children.map(child => {
+                    if (child.kind !== 'file') return null;
+                    const att = child.attachment;
+                    return (
+                      <tr
+                        key={child.id}
+                        onClick={() => onFileSelect(child)}
+                        className="border-b border-[#2d3748] hover:bg-[#282e33] cursor-pointer transition-colors"
+                      >
+                        <td className="py-2.5 pr-4">
+                          <div className="flex items-center gap-2">
+                            <FileTypeIcon fileType={att.fileType} />
+                            <div className="min-w-0">
+                              <p className="text-[#e8ecf0] truncate font-medium text-xs">{att.name}</p>
+                              <p className="text-[#7a8899] text-[10px] uppercase">{att.fileType}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${STATUS_STYLES[att.status] ?? ''}`}>
-                          {att.status.charAt(0).toUpperCase() + att.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-4 text-xs text-[#7a8899] whitespace-nowrap">{fmtSize(att.sizeBytes)}</td>
-                      <td className="py-2.5 pr-4 text-xs text-[#7a8899] whitespace-nowrap">{fmtDate(att.uploadedAt)}</td>
-                      <td className="py-2.5 text-xs text-[#7a8899]">{att.uploadedById ?? '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${STATUS_STYLES[att.status] ?? ''}`}>
+                            {att.status.charAt(0).toUpperCase() + att.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-4 text-xs text-[#7a8899] whitespace-nowrap">{fmtSize(att.sizeBytes)}</td>
+                        <td className="py-2.5 pr-4 text-xs text-[#7a8899] whitespace-nowrap">{fmtDate(att.uploadedAt)}</td>
+                        <td className="py-2.5 text-xs text-[#7a8899]">{att.uploadedById ?? '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       ) : (

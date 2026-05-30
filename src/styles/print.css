@@ -1,0 +1,74 @@
+/* ─── Print stylesheet ────────────────────────────────────────────────────── */
+
+@media print {
+  /* Hide everything on screen except the print view */
+  body * {
+    visibility: hidden;
+  }
+
+  .print-view,
+  .print-view * {
+    visibility: visible;
+  }
+
+  .print-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    color: #111111;
+    font-family: system-ui, -apple-system, Arial, sans-serif;
+    font-size: 11pt;
+    padding: 24pt 32pt;
+  }
+
+  .print-view h1 {
+    font-size: 16pt;
+    font-weight: 700;
+    margin: 0 0 4pt 0;
+    color: #111111;
+  }
+
+  .print-view__date {
+    font-size: 9pt;
+    color: #555555;
+    margin: 0 0 16pt 0;
+  }
+
+  .print-view table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 12pt;
+  }
+
+  .print-view table th {
+    background: #f0f4f8;
+    color: #222222;
+    font-weight: 600;
+    text-align: left;
+    padding: 5pt 8pt;
+    border: 1px solid #cccccc;
+    white-space: nowrap;
+  }
+
+  .print-view table td {
+    padding: 4pt 8pt;
+    border: 1px solid #dddddd;
+    color: #111111;
+    vertical-align: top;
+  }
+
+  .print-view table tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .print-view__footer {
+    font-size: 8pt;
+    color: #777777;
+    margin-top: 8pt;
+    border-top: 1px solid #dddddd;
+    padding-top: 6pt;
+  }
+}

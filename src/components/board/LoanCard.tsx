@@ -4,6 +4,7 @@ import type { Loan } from '../../types';
 import { useLoanService } from '../../context/LoanServiceProvider';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
+import { loanRiskScore } from '../../lib/riskScore';
 
 interface LoanCardProps {
   loan: Loan;
@@ -85,6 +86,8 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
   const isComplete = activeStageId === 'stage-8';
   const hasCriticalWarning = unmetCritical > 0 && !isOverlay;
 
+  const risk = loanRiskScore(loan);
+
   function handleClick(e: MouseEvent) {
     if (e.shiftKey && onBulkToggle) {
       e.preventDefault();
@@ -135,6 +138,18 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
           <span className="flex-shrink-0 text-[9px] font-bold text-[#4bce97] bg-[#4bce97]/15 border border-[#4bce97]/30 rounded px-1 py-0.5 leading-none mt-0.5">
             PAID OFF
           </span>
+        )}
+        {/* Risk dot — only shown for medium / high / critical */}
+        {!isComplete && !isOverlay && risk.level !== 'low' && (
+          <span
+            className={[
+              'flex-shrink-0 w-2 h-2 rounded-full mt-1',
+              risk.level === 'critical' ? 'bg-red-500 animate-pulse' :
+              risk.level === 'high'     ? 'bg-orange-400' :
+              /* medium */                'bg-yellow-400',
+            ].join(' ')}
+            title={`${risk.level.charAt(0).toUpperCase() + risk.level.slice(1)} risk: ${risk.reasons.join(', ')}`}
+          />
         )}
       </div>
 

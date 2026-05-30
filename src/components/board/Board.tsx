@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../shared/Toast';
 import { exportLoansAsCsv } from '../../lib/exportCsv';
 import { dueActions } from '../../lib/dates';
+import { useCommandPalette } from '../../context/CommandPaletteContext';
 import { BoardHeader, type AppView } from './BoardHeader';
 import { PortfolioBar } from './PortfolioBar';
 import { StageColumn } from './StageColumn';
@@ -117,6 +118,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const service = useLoanService();
   const { showToast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const { open: openCommandPalette } = useCommandPalette();
 
   const [stageOverrides, setStageOverrides] = useState<Map<string, string>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -386,6 +388,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
             dueActionItems={dueActionItems}
             theme={theme}
             onToggleTheme={toggleTheme}
+            onOpenCommandPalette={openCommandPalette}
           />
 
           {currentView === 'board' && (
