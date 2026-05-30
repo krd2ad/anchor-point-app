@@ -7,6 +7,7 @@ import { StageSwitcher } from './StageSwitcher';
 import { CommentList } from './CommentList';
 import { CommentComposer } from './CommentComposer';
 import { AttachmentList } from './AttachmentList';
+import { dueActions } from '../../lib/dates';
 
 function Divider() {
   return <div className="border-t border-[#3d4b5c]" />;
@@ -113,6 +114,27 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
           <Spinner />
         ) : (
           <div className="flex-1">
+            {/* Due actions banner */}
+            {(() => {
+              const today = new Date().toISOString().split('T')[0];
+              const actions = dueActions(loanDetail.loan.stageId, loanDetail.loan.firstPaymentDate, today);
+              if (actions.length === 0) return null;
+              return (
+                <div className="mx-4 mt-3 mb-1 p-2.5 rounded-md bg-[#f5cd47]/10 border border-[#f5cd47]/30">
+                  <p className="text-xs font-semibold text-[#f5cd47] mb-1 flex items-center gap-1.5">
+                    <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3 flex-shrink-0">
+                      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.25"/>
+                      <path d="M6 4v3M6 8.5h.01" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
+                    </svg>
+                    Action due today
+                  </p>
+                  {actions.map(a => (
+                    <p key={a.stepId} className="text-[11px] text-[#b6a936] leading-snug">{a.reason} — {a.label}</p>
+                  ))}
+                </div>
+              );
+            })()}
+
             {/* Summary */}
             <LoanSummary
               loan={loanDetail.loan}
