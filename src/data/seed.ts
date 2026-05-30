@@ -36,6 +36,8 @@ export const SEED_BORROWER_ENTITIES: BorrowerEntity[] = [
   { id: 'entity-6', name: 'Wabash Crossing',            type: 'LLC',        ein: '36-8210934' },
   // loan-7 Ski Resort Chewelah
   { id: 'entity-7', name: 'Ski Resort Chewelah',        type: 'Corp',       ein: '91-4037621' },
+  // loan-8 Riverstone Capital LLC
+  { id: 'entity-8', name: 'Riverstone Capital LLC',     type: 'LLC',        ein: '82-3941057' },
 ];
 
 // ─── Principals ───────────────────────────────────────────────────────────────
@@ -82,6 +84,12 @@ export const SEED_PRINCIPALS: Principal[] = [
     firstName: 'Sandra',     lastName: 'Petrov',
     email: 'sandra.petrov@skichewelah.com', phone: '(509) 555-0707',
     idType: 'DriversLicense', idNumber: 'WA-DL-449038', idImageAttachmentId: null,
+  },
+  {
+    id: 'principal-8',
+    firstName: 'Marcus',     lastName: 'Webb',
+    email: 'marcus.webb@riverstonecap.com', phone: '(254) 555-0808',
+    idType: 'DriversLicense', idNumber: 'TX-DL-761234', idImageAttachmentId: null,
   },
 ];
 
@@ -145,6 +153,13 @@ export const SEED_PARCELS: Parcel[] = [
     id: 'parcel-7a',
     addressLine: 'Ski Resort Access Rd', city: 'Chewelah', state: 'WA',
     acreage: 320.0, propertyType: 'Commercial', valuation: 410000,
+  },
+
+  // loan-8 Riverstone Capital LLC
+  {
+    id: 'parcel-8a',
+    addressLine: '8820 Pecan Blvd', city: 'Waco', state: 'TX',
+    acreage: 2.4, propertyType: 'Commercial', valuation: 310000,
   },
 ];
 
@@ -305,6 +320,29 @@ export const SEED_LOANS: Loan[] = [
     createdAt: '2024-05-25T09:00:00.000Z',
     updatedAt: '2025-03-15T14:00:00.000Z',
   },
+  {
+    id: 'loan-8',
+    stageId: 'stage-8',
+    lendingEntity: 'APL',
+    borrowerEntityId: 'entity-8',
+    principalId: 'principal-8',
+    parcelIds: ['parcel-8a'],
+    loanAmount: 225000,
+    currentBalance: 0,
+    interestRate: 14.0,
+    servicer: 'NSC',
+    originationDate: null,
+    closingDate: '2024-03-15',
+    fundedDate: '2024-03-16',
+    firstPaymentDate: '2024-05-01',
+    paymentDueDay: 1,
+    autoPayEnabled: true,
+    displayLabel: 'Riverstone Capital LLC – 8820 Pecan Blvd, Waco TX',
+    loanPosition: 'First Lien',
+    hasDrawProgram: false,
+    createdAt: '2024-02-20T10:00:00.000Z',
+    updatedAt: '2025-05-01T09:00:00.000Z',
+  },
 ];
 
 // ─── Step Statuses ────────────────────────────────────────────────────────────
@@ -398,6 +436,44 @@ export const SEED_STEP_STATUSES: LoanStepStatus[] = [
   { id: 'ss-7-s7-1', loanId: 'loan-7', stepId: 's7-1', status: 'done',     completedBy: 'user-1', completedAt: '2025-01-20T09:00:00.000Z' },
   { id: 'ss-7-s7-2', loanId: 'loan-7', stepId: 's7-2', status: 'done',     completedBy: 'user-3', completedAt: '2025-02-15T09:00:00.000Z' },
   { id: 'ss-7-s7-3', loanId: 'loan-7', stepId: 's7-3', status: 'done',     completedBy: 'user-1', completedAt: '2025-03-01T09:00:00.000Z' },
+
+  // ── loan-8 (stage-8, Completed/Paid Off) — full journey ──────────────────────
+  // Stage 1 representative steps
+  { id: 'ss-8-s1-1', loanId: 'loan-8', stepId: 's1-1', status: 'done', completedBy: 'user-1', completedAt: '2024-02-21T10:00:00.000Z' },
+  { id: 'ss-8-s1-2', loanId: 'loan-8', stepId: 's1-2', status: 'done', completedBy: 'user-1', completedAt: '2024-02-22T10:00:00.000Z' },
+  { id: 'ss-8-s1-3', loanId: 'loan-8', stepId: 's1-3', status: 'done', completedBy: 'user-2', completedAt: '2024-02-23T10:00:00.000Z' },
+  { id: 'ss-8-s1-4', loanId: 'loan-8', stepId: 's1-4', status: 'done', completedBy: 'user-2', completedAt: '2024-02-24T10:00:00.000Z' },
+  // Stage 2 representative steps
+  { id: 'ss-8-s2-1', loanId: 'loan-8', stepId: 's2-1', status: 'done', completedBy: 'user-2', completedAt: '2024-02-26T10:00:00.000Z' },
+  { id: 'ss-8-s2-2', loanId: 'loan-8', stepId: 's2-2', status: 'done', completedBy: 'user-1', completedAt: '2024-02-27T10:00:00.000Z' },
+  { id: 'ss-8-s2-3', loanId: 'loan-8', stepId: 's2-3', status: 'done', completedBy: 'user-2', completedAt: '2024-02-28T10:00:00.000Z' },
+  // Stage 3 representative steps
+  { id: 'ss-8-s3-1', loanId: 'loan-8', stepId: 's3-1', status: 'done', completedBy: 'user-1', completedAt: '2024-03-01T10:00:00.000Z' },
+  { id: 'ss-8-s3-2', loanId: 'loan-8', stepId: 's3-2', status: 'done', completedBy: 'user-2', completedAt: '2024-03-04T10:00:00.000Z' },
+  { id: 'ss-8-s3-3', loanId: 'loan-8', stepId: 's3-3', status: 'done', completedBy: 'user-1', completedAt: '2024-03-05T10:00:00.000Z' },
+  { id: 'ss-8-s3-4', loanId: 'loan-8', stepId: 's3-4', status: 'done', completedBy: 'user-2', completedAt: '2024-03-06T10:00:00.000Z' },
+  { id: 'ss-8-s3-5', loanId: 'loan-8', stepId: 's3-5', status: 'done', completedBy: 'user-1', completedAt: '2024-03-07T10:00:00.000Z' },
+  { id: 'ss-8-s3-6', loanId: 'loan-8', stepId: 's3-6', status: 'done', completedBy: 'user-2', completedAt: '2024-03-08T10:00:00.000Z' },
+  { id: 'ss-8-s3-7', loanId: 'loan-8', stepId: 's3-7', status: 'done', completedBy: 'user-1', completedAt: '2024-03-09T10:00:00.000Z' },
+  { id: 'ss-8-s3-8', loanId: 'loan-8', stepId: 's3-8', status: 'done', completedBy: 'user-2', completedAt: '2024-03-10T10:00:00.000Z' },
+  // Stage 4 representative steps
+  { id: 'ss-8-s4-1', loanId: 'loan-8', stepId: 's4-1', status: 'done', completedBy: 'user-2', completedAt: '2024-03-12T10:00:00.000Z' },
+  { id: 'ss-8-s4-2', loanId: 'loan-8', stepId: 's4-2', status: 'done', completedBy: 'user-1', completedAt: '2024-03-13T10:00:00.000Z' },
+  { id: 'ss-8-s4-3', loanId: 'loan-8', stepId: 's4-3', status: 'done', completedBy: 'user-2', completedAt: '2024-03-14T10:00:00.000Z' },
+  { id: 'ss-8-s4-4', loanId: 'loan-8', stepId: 's4-4', status: 'done', completedBy: 'user-1', completedAt: '2024-03-15T10:00:00.000Z' },
+  // Stage 5 representative steps
+  { id: 'ss-8-s5-1', loanId: 'loan-8', stepId: 's5-1', status: 'done', completedBy: 'user-2', completedAt: '2024-03-18T10:00:00.000Z' },
+  { id: 'ss-8-s5-2', loanId: 'loan-8', stepId: 's5-2', status: 'done', completedBy: 'user-2', completedAt: '2024-03-18T12:00:00.000Z' },
+  { id: 'ss-8-s5-5', loanId: 'loan-8', stepId: 's5-5', status: 'done', completedBy: 'user-1', completedAt: '2024-04-01T10:00:00.000Z' },
+  // Stage 7 representative step (loan transitioned cleanly, no special servicing)
+  { id: 'ss-8-s7-1', loanId: 'loan-8', stepId: 's7-1', status: 'na',   completedBy: null,     completedAt: null },
+  // Stage 8 — all 6 steps done
+  { id: 'ss-8-s8-1', loanId: 'loan-8', stepId: 's8-1', status: 'done', completedBy: 'user-1', completedAt: '2025-03-10T09:00:00.000Z' },
+  { id: 'ss-8-s8-2', loanId: 'loan-8', stepId: 's8-2', status: 'done', completedBy: 'user-2', completedAt: '2025-03-12T10:00:00.000Z' },
+  { id: 'ss-8-s8-3', loanId: 'loan-8', stepId: 's8-3', status: 'done', completedBy: 'user-1', completedAt: '2025-03-14T11:00:00.000Z' },
+  { id: 'ss-8-s8-4', loanId: 'loan-8', stepId: 's8-4', status: 'done', completedBy: 'user-2', completedAt: '2025-04-01T13:00:00.000Z' },
+  { id: 'ss-8-s8-5', loanId: 'loan-8', stepId: 's8-5', status: 'done', completedBy: 'user-1', completedAt: '2025-04-15T10:00:00.000Z' },
+  { id: 'ss-8-s8-6', loanId: 'loan-8', stepId: 's8-6', status: 'done', completedBy: 'user-2', completedAt: '2025-05-01T09:00:00.000Z' },
 ];
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
@@ -431,6 +507,10 @@ export const SEED_COMMENTS: Comment[] = [
   // loan-7 (stage-7)
   { id: 'comment-7a', loanId: 'loan-7', stageId: 'stage-7', authorId: 'user-1', body: 'Foreclosure firm retained — Pacific Northwest Legal Group engaged.', resolved: true,  createdAt: '2025-01-20T10:00:00.000Z' },
   { id: 'comment-7b', loanId: 'loan-7', stageId: 'stage-7', authorId: 'user-4', body: 'Ski resort collateral protection review needed before winter season ends.', resolved: false, createdAt: '2025-03-15T15:00:00.000Z' },
+
+  // loan-8 (stage-8, Completed/Paid Off)
+  { id: 'comment-8a', loanId: 'loan-8', stageId: 'stage-3', authorId: 'user-1', body: 'Loan funded successfully — all docs in order.', resolved: true,  createdAt: '2024-03-16T14:00:00.000Z' },
+  { id: 'comment-8b', loanId: 'loan-8', stageId: 'stage-8', authorId: 'user-1', body: 'Lien release confirmed by NSC. Loan fully closed.', resolved: false, createdAt: '2025-05-01T10:00:00.000Z' },
 ];
 
 // ─── Attachments ──────────────────────────────────────────────────────────────
@@ -1038,5 +1118,126 @@ export const SEED_ATTACHMENTS: Attachment[] = [
     kind: 'Other', status: 'verified',
     category: 'Insurance', fileType: 'pdf',
     sizeBytes: 480000, uploadedAt: '2024-06-24T10:00:00.000Z', uploadedById: 'user-2',
+  },
+
+  // ── loan-8 (stage-8, Completed/Paid Off) — full verified set ─────────────────
+  {
+    id: 'att-8a', loanId: 'loan-8',
+    name: 'Government-Issued ID – Marcus Webb',
+    kind: 'ID', status: 'verified',
+    category: 'Underwriting', fileType: 'jpg',
+    sizeBytes: 408000, uploadedAt: '2024-02-21T09:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8b', loanId: 'loan-8',
+    name: 'Tri-Merge Credit Report',
+    kind: 'Other', status: 'verified',
+    category: 'Underwriting', fileType: 'pdf',
+    sizeBytes: 516000, uploadedAt: '2024-02-22T10:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8c', loanId: 'loan-8',
+    name: 'Personal Financial Statement',
+    kind: 'Other', status: 'verified',
+    category: 'Underwriting', fileType: 'pdf',
+    sizeBytes: 374000, uploadedAt: '2024-02-23T11:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8d', loanId: 'loan-8',
+    name: 'Tax Returns – 2022 & 2023',
+    kind: 'Other', status: 'verified',
+    category: 'Underwriting', fileType: 'pdf',
+    sizeBytes: 2240000, uploadedAt: '2024-02-24T09:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8e', loanId: 'loan-8',
+    name: 'Entity Documents – Riverstone Capital LLC',
+    kind: 'Other', status: 'verified',
+    category: 'Underwriting', fileType: 'pdf',
+    sizeBytes: 698000, uploadedAt: '2024-02-25T11:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8f', loanId: 'loan-8',
+    name: 'Conditional Term Sheet',
+    kind: 'TermSheet', status: 'verified',
+    category: 'Loan Docs', fileType: 'pdf',
+    sizeBytes: 288000, uploadedAt: '2024-02-27T09:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8g', loanId: 'loan-8',
+    name: 'Secured Note',
+    kind: 'Other', status: 'verified',
+    category: 'Loan Docs', fileType: 'pdf',
+    sizeBytes: 192000, uploadedAt: '2024-03-10T10:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8h', loanId: 'loan-8',
+    name: 'Deed of Trust – 8820 Pecan Blvd',
+    kind: 'Deed', status: 'verified',
+    category: 'Loan Docs', fileType: 'pdf',
+    sizeBytes: 348000, uploadedAt: '2024-03-11T11:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8i', loanId: 'loan-8',
+    name: 'Title Commitment / Report',
+    kind: 'Deed', status: 'verified',
+    category: 'Title', fileType: 'pdf',
+    sizeBytes: 915000, uploadedAt: '2024-03-05T09:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8j', loanId: 'loan-8',
+    name: 'Closing Protection Letter – CPL',
+    kind: 'Other', status: 'verified',
+    category: 'Title', fileType: 'pdf',
+    sizeBytes: 218000, uploadedAt: '2024-03-06T10:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8k', loanId: 'loan-8',
+    name: 'Wire Instructions',
+    kind: 'Other', status: 'verified',
+    category: 'Title', fileType: 'pdf',
+    sizeBytes: 92000, uploadedAt: '2024-03-08T14:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8l', loanId: 'loan-8',
+    name: 'Recorded Deed of Trust',
+    kind: 'Deed', status: 'verified',
+    category: 'Final Loan Docs', fileType: 'pdf',
+    sizeBytes: 425000, uploadedAt: '2024-03-20T09:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8m', loanId: 'loan-8',
+    name: 'Final Lender\'s Title Policy',
+    kind: 'Other', status: 'verified',
+    category: 'Final Loan Docs', fileType: 'pdf',
+    sizeBytes: 565000, uploadedAt: '2024-03-20T10:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8n', loanId: 'loan-8',
+    name: 'Final Settlement Statement / ALTA-CD',
+    kind: 'Settlement', status: 'verified',
+    category: 'Final Loan Docs', fileType: 'pdf',
+    sizeBytes: 638000, uploadedAt: '2024-03-21T10:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8o', loanId: 'loan-8',
+    name: 'NSC Setup Form',
+    kind: 'Other', status: 'verified',
+    category: 'NSC', fileType: 'pdf',
+    sizeBytes: 182000, uploadedAt: '2024-03-22T11:00:00.000Z', uploadedById: 'user-2',
+  },
+  {
+    id: 'att-8p', loanId: 'loan-8',
+    name: 'Payoff Statement – Riverstone Capital LLC',
+    kind: 'Other', status: 'verified',
+    category: 'NSC', fileType: 'pdf',
+    sizeBytes: 148000, uploadedAt: '2025-03-12T10:00:00.000Z', uploadedById: 'user-1',
+  },
+  {
+    id: 'att-8q', loanId: 'loan-8',
+    name: 'Hazard / Fire Policy – APL as Mortgagee',
+    kind: 'Other', status: 'verified',
+    category: 'Insurance', fileType: 'pdf',
+    sizeBytes: 745000, uploadedAt: '2024-03-18T09:00:00.000Z', uploadedById: 'user-1',
   },
 ];
