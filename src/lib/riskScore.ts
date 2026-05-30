@@ -2,6 +2,12 @@ import type { Loan } from '../types';
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
+/**
+ * Compute a composite risk score for a loan.
+ * Score accumulates points for high LTV (+1–3), Special Servicing (+3), Foreclosure (+4),
+ * large loan size (+1), and subtracts 1 for autopay. Level: low <2, medium 2–3, high 4–5, critical ≥6.
+ * Completed loans (stage-8) always return level 'low'.
+ */
 export function loanRiskScore(loan: Loan): { level: RiskLevel; score: number; reasons: string[] } {
   let score = 0;
   const reasons: string[] = [];

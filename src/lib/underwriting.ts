@@ -86,6 +86,13 @@ interface ScorecardInputs {
   parcelState?: string;
 }
 
+/**
+ * Build an underwriting scorecard for a loan from the given inputs.
+ * Returns pass/fail/na results for each program rule; decision is 'Approved' when no rules fail,
+ * 'Denied' when ltv or anchor_points fail, and 'Suspended' for any other failure.
+ * @param loanId - ID of the loan being scored
+ * @param inputs - financial inputs (loanAmount required; others optional, treated as n/a if absent)
+ */
 export function buildScorecard(
   loanId: string,
   inputs: ScorecardInputs,

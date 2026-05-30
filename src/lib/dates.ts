@@ -2,7 +2,7 @@
 // All functions are pure and take explicit date strings (no Date.now()).
 
 /**
- * First payment date = 1st of the month after the first full month post-closing.
+ * Returns the first payment due date as the 1st of the month two months after closing.
  * e.g. closing Jan 1 OR Jan 31 → first payment Mar 1.
  */
 export function firstPaymentDate(closingDateIso: string): string {
@@ -17,10 +17,10 @@ export function firstPaymentDate(closingDateIso: string): string {
 }
 
 /**
- * NSC setup send date + paymentDayOfMonth, based on closing date.
- * - Closed 21st–end of month → send on 1st of next month, payment due 1st
- * - Closed 1st–9th → send on 10th of same month, payment due 10th
- * - Closed 10th–20th → send on 20th, payment due 20th
+ * Computes the NSC setup send date and recurring payment day based on the closing date.
+ * Closing 21st–end of month → sendDate is 1st of next month, paymentDayOfMonth 1.
+ * Closing 1st–9th → sendDate is 10th of closing month, paymentDayOfMonth 10.
+ * Closing 10th–20th → sendDate is 20th of closing month, paymentDayOfMonth 20.
  */
 export function nscSetupSendDate(closingDateIso: string): { sendDate: string; paymentDayOfMonth: 1 | 10 | 20 } {
   const d = new Date(closingDateIso);
@@ -49,10 +49,6 @@ export function nscSetupSendDate(closingDateIso: string): { sendDate: string; pa
   }
 }
 
-/**
- * Returns which Collecting/Special-Servicing communications are due on a given date.
- * todayIso = 'YYYY-MM-DD'
- */
 export interface DueAction {
   stepId: string;
   label: string;
@@ -60,6 +56,11 @@ export interface DueAction {
   reason: string;
 }
 
+/**
+ * Returns communications due today for a loan in Collecting (stage-5) or Special Servicing (stage-6),
+ * based on how many days have elapsed since the first payment date.
+ * Returns an empty array if firstPaymentDateIso is null or the stage has no scheduled actions.
+ */
 export function dueActions(
   loanStageId: string,
   firstPaymentDateIso: string | null,

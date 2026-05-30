@@ -71,6 +71,13 @@ export interface BuildFileTreeOptions {
   showEmptyCategories?: boolean;
 }
 
+/**
+ * Build a three-level file tree: loan → category → file.
+ * Loans are sorted by stage order then displayLabel; categories follow LOAN_FOLDER_CATEGORIES order.
+ * @param loans - all loans to include as top-level nodes
+ * @param attachments - all attachments, grouped by loanId and category
+ * @param options - set showEmptyCategories=false to omit category nodes with no files (default: true)
+ */
 export function buildFileTree(
   loans: Loan[],
   attachments: Attachment[],
