@@ -96,6 +96,9 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
       setStageHistory(history);
       setIsStarred(detail.loan.isStarred ?? false);
       setLoading(false);
+    }).catch(err => {
+      console.error('Failed to load loan detail:', err);
+      setLoading(false);
     });
   }, [selectedLoanId, service]);
 

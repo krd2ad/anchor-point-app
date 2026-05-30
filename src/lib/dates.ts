@@ -71,13 +71,12 @@ export function dueActions(
   const daysSinceFirstPayment = Math.floor(
     (today.getTime() - firstPayment.getTime()) / (1000 * 60 * 60 * 24),
   );
-  const todayDay = today.getDate();
 
   const actions: DueAction[] = [];
 
   if (loanStageId === 'stage-5') {
-    // 10th of month after first payment missed
-    if (daysSinceFirstPayment >= 10 && daysSinceFirstPayment < 11 && todayDay === 10) {
+    // Escalation schedule based on days since first payment missed
+    if (daysSinceFirstPayment >= 10 && daysSinceFirstPayment < 15) {
       actions.push({ stepId: 's5-3', label: 'First Payment Late (0–10 Days)', templateId: 'late_10day', reason: '10-day late notice due today' });
     }
     if (daysSinceFirstPayment >= 15 && daysSinceFirstPayment <= 17) {
@@ -95,9 +94,12 @@ export function dueActions(
     if (daysSinceFirstPayment >= 30 && daysSinceFirstPayment < 32) {
       actions.push({ stepId: 's6-3', label: 'Demand Letter from Law Firm', templateId: 'demand_letter_request', reason: '30-day demand letter threshold reached' });
     }
-    // Portfolio check on 10th and 20th
-    if (todayDay === 10 || todayDay === 20) {
-      actions.push({ stepId: 's6-1', label: 'Portfolio Check Day', reason: `Monthly check due (${todayDay}th)` });
+    // Portfolio check at 10-day and 20-day thresholds since first payment
+    if (daysSinceFirstPayment >= 10 && daysSinceFirstPayment < 11) {
+      actions.push({ stepId: 's6-1', label: 'Portfolio Check Day', reason: 'Monthly portfolio check due (10-day threshold)' });
+    }
+    if (daysSinceFirstPayment >= 20 && daysSinceFirstPayment < 21) {
+      actions.push({ stepId: 's6-1', label: 'Portfolio Check Day', reason: 'Monthly portfolio check due (20-day threshold)' });
     }
   }
 

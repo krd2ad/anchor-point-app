@@ -433,6 +433,7 @@ export function StageStepChecklist({ loanId, stageId, isCurrentStage, onStepStat
 
   async function handleMarkSent(stepId: string) {
     // Mark the step done via the same toggle path
+    const current = getStatus(stepId);
     setStatuses(prev => {
       const existing = prev.find(s => s.stepId === stepId);
       if (existing) return prev.map(s => s.stepId === stepId ? { ...s, status: 'done' } : s);
@@ -444,7 +445,8 @@ export function StageStepChecklist({ loanId, stageId, isCurrentStage, onStepStat
       onStepStatusChanged?.();
       showToast('Email sent — step marked complete', 'success');
     } catch {
-      // Step still shows sent in UI since service is in-memory mock
+      // Roll back optimistic update on failure
+      setStatuses(prev => prev.map(s => s.stepId === stepId ? { ...s, status: current } : s));
     }
   }
 

@@ -196,9 +196,9 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     setSelectedLoanIds(new Set());
   }, []);
 
-  const handleStarToggled = useCallback((loan: Loan) => {
-    // Optimistic override so column re-sorts immediately
-    setStarOverrides((prev) => new Map(prev).set(loan.id, loan.isStarred ?? false));
+  const handleStarToggled = useCallback((updatedLoan: Loan) => {
+    // Optimistic override so column re-sorts immediately (use the new value from the service)
+    setStarOverrides((prev) => new Map(prev).set(updatedLoan.id, updatedLoan.isStarred ?? false));
     // Refresh provider loans so CommandPalette and other consumers see the updated isStarred
     refreshLoans();
   }, [refreshLoans]);
@@ -375,15 +375,15 @@ export function Board({ currentView, onViewChange }: BoardProps) {
       }
     }
 
-    commitMove(loanId, newStageId, currentStageId);
+    commitMove(loanId, newStageId, currentStageId, false);
   }
 
-  const commitMove = useCallback((loanId: string, newStageId: string, fromStageId: string | undefined) => {
+  const commitMove = useCallback((loanId: string, newStageId: string, fromStageId: string | undefined, wasOverride: boolean) => {
     setStageOverrides((prev) => new Map(prev).set(loanId, newStageId));
     service.moveLoanToStage(loanId, newStageId);
 
-    // Auto-log override comment if this was a confirmed critical gate override
-    if (fromStageId === 'stage-3') {
+    // Auto-log override comment only when critical gates were explicitly overridden
+    if (wasOverride && fromStageId === 'stage-3') {
       service.addComment(
         loanId,
         newStageId,
@@ -396,7 +396,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   function handleConfirmOverride() {
     if (!pendingDrag) return;
     const fromStage = stageOverrides.get(pendingDrag.loanId) ?? loans.find(l => l.id === pendingDrag.loanId)?.stageId;
-    commitMove(pendingDrag.loanId, pendingDrag.newStageId, fromStage);
+    commitMove(pendingDrag.loanId, pendingDrag.newStageId, fromStage, true);
     setPendingDrag(null);
   }
 
@@ -410,11 +410,12 @@ export function Board({ currentView, onViewChange }: BoardProps) {
 
   const today = new Date().toISOString().split('T')[0];
   const dueActionsCount = loans.filter(
-    (l) => dueActions(l.stageId, l.firstPaymentDate, today).length > 0
+    (l) => dueActions(stageOverrides.get(l.id) ?? l.stageId, l.firstPaymentDate, today).length > 0
   ).length;
   const dueActionItems = loans
     .flatMap((l) => {
-      const actions = dueActions(l.stageId, l.firstPaymentDate, today);
+      const effectiveStageId = stageOverrides.get(l.id) ?? l.stageId;
+      const actions = dueActions(effectiveStageId, l.firstPaymentDate, today);
       return actions.map((a) => ({ label: l.displayLabel, reason: a.reason }));
     });
 
