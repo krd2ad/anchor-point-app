@@ -5,6 +5,7 @@ import { LoanDetailPanel } from './components/detail/LoanDetailPanel';
 import { FilesView } from './components/files/FilesView';
 import { BoardHeader } from './components/board/BoardHeader';
 import { useSelectedLoan } from './context/LoanServiceProvider';
+import { ToastProvider } from './components/shared/Toast';
 import type { AppView } from './components/board/BoardHeader';
 
 // Inner component so we can use hooks after provider mounts
@@ -42,7 +43,9 @@ function AppShell() {
 export default function App() {
   return (
     <LoanServiceProvider>
-      <AppShell />
+      <ToastProvider>
+        <AppShell />
+      </ToastProvider>
     </LoanServiceProvider>
   );
 }

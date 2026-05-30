@@ -28,6 +28,7 @@ export interface LoanService {
   addComment(loanId: string, stageId: string, body: string): Promise<Comment>;
   resolveComment(commentId: string): Promise<Comment>;
   unresolveComment(commentId: string): Promise<Comment>;
+  createLoan(data: Pick<Loan, 'displayLabel' | 'loanAmount' | 'lendingEntity'>): Promise<Loan>;
 
   // ── SOP additions (Phase 1+) ─────────────────────────────────────────────────
   getMessageTemplates(): Promise<MessageTemplate[]>;

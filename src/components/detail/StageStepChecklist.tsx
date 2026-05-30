@@ -5,6 +5,7 @@ import type {
 import { STAGES } from '../../data/stages';
 import { EXTERNAL_PARTIES } from '../../data/externalParties';
 import { useLoanService } from '../../context/LoanServiceProvider';
+import { useToast } from '../shared/Toast';
 import { ActionChip, OwnerChip } from './stepMeta';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -381,6 +382,7 @@ interface StageStepChecklistProps {
 
 export function StageStepChecklist({ loanId, stageId, isCurrentStage, onStepStatusChanged }: StageStepChecklistProps) {
   const service = useLoanService();
+  const { showToast } = useToast();
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [statuses, setStatuses] = useState<LoanStepStatus[]>([]);
   const [scorecard, setScorecard] = useState<UnderwritingScorecard | null>(null);
@@ -440,6 +442,7 @@ export function StageStepChecklist({ loanId, stageId, isCurrentStage, onStepStat
       const updated = await service.setStepStatus(loanId, stepId, 'done');
       setStatuses(prev => prev.map(s => s.stepId === stepId ? updated : s));
       onStepStatusChanged?.();
+      showToast('Email sent — step marked complete', 'success');
     } catch {
       // Step still shows sent in UI since service is in-memory mock
     }

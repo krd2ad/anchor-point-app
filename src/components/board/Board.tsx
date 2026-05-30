@@ -11,9 +11,11 @@ import {
 import { STAGES } from '../../data/stages';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { useLoans, useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
+import { useToast } from '../shared/Toast';
 import { BoardHeader, type AppView } from './BoardHeader';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
+import { NewLoanModal } from './NewLoanModal';
 import type { Loan } from '../../types';
 
 // Stage orders that require critical closing gates to be cleared
@@ -107,10 +109,12 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const { loans, loading } = useLoans();
   const { selectedLoanId, selectLoan } = useSelectedLoan();
   const service = useLoanService();
+  const { showToast } = useToast();
 
   const [stageOverrides, setStageOverrides] = useState<Map<string, string>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);
+  const [showNewLoanModal, setShowNewLoanModal] = useState(false);
 
   const ZOOM_STEPS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
   const [zoom, setZoom] = useState(0.8);
@@ -185,8 +189,9 @@ export function Board({ currentView, onViewChange }: BoardProps) {
         newStageId,
         '⚠️ Funding override: loan moved to Servicing Setup with one or more critical closing gates unmet. Review required.',
       );
+      showToast('Override logged as comment', 'warning');
     }
-  }, [service]);
+  }, [service, showToast]);
 
   function handleConfirmOverride() {
     if (!pendingDrag) return;
@@ -207,7 +212,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="min-h-screen bg-[#1d2125] flex flex-col">
-          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} currentView={currentView} onViewChange={onViewChange} />
+          <BoardHeader zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} currentView={currentView} onViewChange={onViewChange} onNewLoan={() => setShowNewLoanModal(true)} />
 
           <div className="flex-1 overflow-x-auto">
             <div className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }}>
@@ -223,6 +228,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
                     selectedLoanId={selectedLoanId}
                     onSelectLoan={selectLoan}
                     activeId={activeId}
+                    stageOverrides={stageOverrides}
                   />
                 );
               })}
@@ -248,6 +254,10 @@ export function Board({ currentView, onViewChange }: BoardProps) {
           onConfirm={handleConfirmOverride}
           onCancel={() => setPendingDrag(null)}
         />
+      )}
+
+      {showNewLoanModal && (
+        <NewLoanModal onClose={() => setShowNewLoanModal(false)} />
       )}
     </>
   );

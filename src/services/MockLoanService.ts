@@ -164,6 +164,58 @@ export class MockLoanService implements LoanService {
     return Promise.resolve({ ...comment });
   }
 
+  async createLoan(data: Pick<Loan, 'displayLabel' | 'loanAmount' | 'lendingEntity'>): Promise<Loan> {
+    const id = `loan-${nanoid(6)}`;
+
+    // Create a minimal borrower entity + principal for the new loan
+    const entityId = `entity-${nanoid(6)}`;
+    const principalId = `principal-${nanoid(6)}`;
+
+    const entity: BorrowerEntity = {
+      id: entityId,
+      name: data.displayLabel,
+      type: 'LLC',
+      ein: null,
+    };
+    const principal: Principal = {
+      id: principalId,
+      firstName: data.displayLabel,
+      lastName: '',
+      email: '',
+      phone: '',
+      idType: 'DriversLicense',
+      idNumber: '',
+      idImageAttachmentId: null,
+    };
+    this.entities.set(entityId, entity);
+    this.principals.set(principalId, principal);
+
+    const now = new Date().toISOString();
+    const loan: Loan = {
+      id,
+      stageId: 'stage-1',
+      lendingEntity: data.lendingEntity,
+      borrowerEntityId: entityId,
+      principalId,
+      parcelIds: [],
+      loanAmount: data.loanAmount,
+      currentBalance: data.loanAmount,
+      interestRate: 0.12,
+      servicer: 'NSC',
+      originationDate: null,
+      closingDate: null,
+      fundedDate: null,
+      firstPaymentDate: null,
+      paymentDueDay: 1,
+      autoPayEnabled: false,
+      displayLabel: data.displayLabel,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.loans.set(id, loan);
+    return Promise.resolve({ ...loan });
+  }
+
   // ─── SOP additions — stubs filled in by later phases ─────────────────────────
 
   async getMessageTemplates(): Promise<MessageTemplate[]> {

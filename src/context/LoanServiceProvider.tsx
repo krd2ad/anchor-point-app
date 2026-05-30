@@ -17,6 +17,7 @@ import { buildFileTree, type FileTreeNode } from '../lib/fileTree';
 interface LoansState {
   loans: Loan[];
   loading: boolean;
+  refreshLoans: () => Promise<void>;
 }
 
 interface SelectedLoanState {
@@ -26,7 +27,7 @@ interface SelectedLoanState {
 }
 
 const ServiceContext = createContext<LoanService | null>(null);
-const LoansContext = createContext<LoansState>({ loans: [], loading: true });
+const LoansContext = createContext<LoansState>({ loans: [], loading: true, refreshLoans: async () => {} });
 const SelectedLoanContext = createContext<SelectedLoanState>({
   selectedLoanId: null,
   selectLoan: () => {},
@@ -50,20 +51,23 @@ export function LoanServiceProvider({
   const [loading, setLoading] = useState(true);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchLoans = useCallback(async () => {
     setLoading(true);
-    service.getLoans().then(data => {
-      setLoans(data);
-      setLoading(false);
-    });
+    const data = await service.getLoans();
+    setLoans(data);
+    setLoading(false);
   }, [service]);
+
+  useEffect(() => { fetchLoans(); }, [fetchLoans]);
+
+  const refreshLoans = useCallback(async () => { await fetchLoans(); }, [fetchLoans]);
 
   const selectLoan = useCallback((id: string) => setSelectedLoanId(id), []);
   const clearSelection = useCallback(() => setSelectedLoanId(null), []);
 
   return (
     <ServiceContext.Provider value={service}>
-      <LoansContext.Provider value={{ loans, loading }}>
+      <LoansContext.Provider value={{ loans, loading, refreshLoans }}>
         <SelectedLoanContext.Provider value={{ selectedLoanId, selectLoan, clearSelection }}>
           {children}
         </SelectedLoanContext.Provider>

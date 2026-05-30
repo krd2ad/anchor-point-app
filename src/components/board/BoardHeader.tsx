@@ -15,9 +15,10 @@ interface BoardHeaderProps {
   onZoomReset: () => void;
   currentView: AppView;
   onViewChange: (view: AppView) => void;
+  onNewLoan?: () => void;
 }
 
-export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentView, onViewChange }: BoardHeaderProps) {
+export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentView, onViewChange, onNewLoan }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
 
   return (
@@ -49,6 +50,19 @@ export function BoardHeader({ zoom, onZoomIn, onZoomOut, onZoomReset, currentVie
       </div>
 
       <div className="flex items-center gap-3">
+        {/* New Loan button — only visible in board view */}
+        {onNewLoan && currentView === 'board' && (
+          <button
+            onClick={onNewLoan}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#579dff] hover:bg-[#4a8fe8] rounded-md transition-colors"
+          >
+            <svg viewBox="0 0 12 12" fill="none" className="w-3.5 h-3.5">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+            </svg>
+            New Loan
+          </button>
+        )}
+
         {/* Zoom controls */}
         <div className="flex items-center gap-1 bg-[#22272b] border border-[#3d4b5c] rounded-md px-1 py-0.5">
           <button

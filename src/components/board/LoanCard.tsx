@@ -10,6 +10,7 @@ interface LoanCardProps {
   isSelected: boolean;
   onSelect: () => void;
   isOverlay?: boolean;
+  effectiveStageId?: string;
 }
 
 function formatAmount(amount: number): string {
@@ -29,13 +30,15 @@ for (const step of STAGE_STEPS) {
   }
 }
 
-export function LoanCard({ loan, isSelected, onSelect, isOverlay = false }: LoanCardProps) {
+export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId }: LoanCardProps) {
   const service = useLoanService();
   const [doneCount, setDoneCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [unmetCritical, setUnmetCritical] = useState(0);
 
-  const stage = STAGES.find(s => s.id === loan.stageId);
+  // Use effectiveStageId (post-drag override) when present, fall back to loan.stageId
+  const activeStageId = effectiveStageId ?? loan.stageId;
+  const stage = STAGES.find(s => s.id === activeStageId);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: loan.id,
@@ -46,7 +49,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false }: Loan
     if (isOverlay) return;
     let cancelled = false;
     Promise.all([
-      service.getStageSteps(loan.stageId),
+      service.getStageSteps(activeStageId),
       service.getStepStatuses(loan.id),
     ]).then(([steps, statuses]) => {
       if (cancelled) return;
@@ -61,7 +64,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false }: Loan
       setDoneCount(done);
 
       // Count unmet critical gates for this stage
-      const criticalIds = CRITICAL_STEPS_BY_STAGE.get(loan.stageId);
+      const criticalIds = CRITICAL_STEPS_BY_STAGE.get(activeStageId);
       if (criticalIds) {
         const unmet = [...criticalIds].filter(id => !doneIds.has(id)).length;
         setUnmetCritical(unmet);
@@ -70,13 +73,13 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false }: Loan
       }
     });
     return () => { cancelled = true; };
-  }, [loan.id, loan.stageId, service, isOverlay]);
+  }, [loan.id, activeStageId, service, isOverlay]);
 
   const progressPct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
   const progressColor =
     progressPct === 100 ? '#4bce97' : progressPct > 50 ? '#f5cd47' : '#579dff';
 
-  const isComplete = loan.stageId === 'stage-8';
+  const isComplete = activeStageId === 'stage-8';
   const hasCriticalWarning = unmetCritical > 0 && !isOverlay;
 
   return (
