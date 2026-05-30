@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import type { Loan } from '../../types';
 import { useLoanService } from '../../context/LoanServiceProvider';
@@ -12,6 +12,8 @@ interface LoanCardProps {
   isOverlay?: boolean;
   effectiveStageId?: string;
   isKeyboardFocused?: boolean;
+  isBulkSelected?: boolean;
+  onBulkToggle?: (id: string) => void;
 }
 
 function formatAmount(amount: number): string {
@@ -31,7 +33,7 @@ for (const step of STAGE_STEPS) {
   }
 }
 
-export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false }: LoanCardProps) {
+export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false, isBulkSelected = false, onBulkToggle }: LoanCardProps) {
   const service = useLoanService();
   const [doneCount, setDoneCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -83,27 +85,38 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
   const isComplete = activeStageId === 'stage-8';
   const hasCriticalWarning = unmetCritical > 0 && !isOverlay;
 
+  function handleClick(e: MouseEvent) {
+    if (e.shiftKey && onBulkToggle) {
+      e.preventDefault();
+      onBulkToggle(loan.id);
+    } else {
+      onSelect();
+    }
+  }
+
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      onClick={onSelect}
+      onClick={handleClick}
       className={[
         'bg-[#22272b] border rounded-md p-3 mb-2 transition-all duration-100 select-none',
         isOverlay
           ? 'border-[#579dff] shadow-2xl cursor-grabbing rotate-1 opacity-95'
           : isDragging
             ? 'border-[#454f59] opacity-30 cursor-grabbing'
-            : hasCriticalWarning
-              ? 'border-[#f87168]/40 cursor-grab hover:border-[#f87168]/60'
-              : isSelected
-                ? 'border-[#579dff] ring-2 ring-[#579dff]/50 cursor-pointer'
-                : isKeyboardFocused
-                  ? 'border-[#579dff]/60 ring-2 ring-[#579dff]/30 ring-dashed cursor-grab'
-                  : isComplete
-                    ? 'border-[#4bce97]/30 cursor-grab hover:border-[#4bce97]/50'
-                    : 'border-[#454f59] hover:border-[#6b7a8d] cursor-grab',
+            : isBulkSelected
+              ? 'border-[#4bce97]/60 ring-2 ring-[#4bce97]/60 cursor-pointer'
+              : hasCriticalWarning
+                ? 'border-[#f87168]/40 cursor-grab hover:border-[#f87168]/60'
+                : isSelected
+                  ? 'border-[#579dff] ring-2 ring-[#579dff]/50 cursor-pointer'
+                  : isKeyboardFocused
+                    ? 'border-[#579dff]/60 ring-2 ring-[#579dff]/30 ring-dashed cursor-grab'
+                    : isComplete
+                      ? 'border-[#4bce97]/30 cursor-grab hover:border-[#4bce97]/50'
+                      : 'border-[#454f59] hover:border-[#6b7a8d] cursor-grab',
       ].join(' ')}
     >
       {/* Top row: label + badges */}

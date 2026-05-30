@@ -16,6 +16,7 @@ import { exportLoansAsCsv } from '../../lib/exportCsv';
 import { BoardHeader, type AppView } from './BoardHeader';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
+import { BulkActionBar } from './BulkActionBar';
 import { NewLoanModal } from './NewLoanModal';
 import type { Loan } from '../../types';
 
@@ -116,6 +117,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);
   const [showNewLoanModal, setShowNewLoanModal] = useState(false);
+  const [selectedLoanIds, setSelectedLoanIds] = useState<Set<string>>(new Set());
 
   // Keyboard navigation state
   const [keyboardFocusedLoanId, setKeyboardFocusedLoanId] = useState<string | null>(null);
@@ -126,6 +128,37 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const zoomIn    = useCallback(() => setZoom(z => ZOOM_STEPS[Math.min(ZOOM_STEPS.indexOf(z) + 1, ZOOM_STEPS.length - 1)]), []);
   const zoomOut   = useCallback(() => setZoom(z => ZOOM_STEPS[Math.max(ZOOM_STEPS.indexOf(z) - 1, 0)]), []);
   const zoomReset = useCallback(() => setZoom(1.0), []);
+
+  const handleBulkToggle = useCallback((loanId: string) => {
+    // Close detail panel if open
+    if (selectedLoanId !== null) {
+      clearSelection();
+    }
+    setSelectedLoanIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(loanId)) {
+        next.delete(loanId);
+      } else {
+        next.add(loanId);
+      }
+      return next;
+    });
+  }, [selectedLoanId, clearSelection]);
+
+  const handleBulkMoveToStage = useCallback((newStageId: string) => {
+    const stageName = STAGES.find(s => s.id === newStageId)?.name ?? newStageId;
+    const count = selectedLoanIds.size;
+    selectedLoanIds.forEach((loanId) => {
+      setStageOverrides((prev) => new Map(prev).set(loanId, newStageId));
+      service.moveLoanToStage(loanId, newStageId);
+    });
+    setSelectedLoanIds(new Set());
+    showToast(`${count} loan${count !== 1 ? 's' : ''} moved to ${stageName}`, 'success');
+  }, [selectedLoanIds, service, showToast]);
+
+  const handleBulkClear = useCallback(() => {
+    setSelectedLoanIds(new Set());
+  }, []);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -347,10 +380,15 @@ export function Board({ currentView, onViewChange }: BoardProps) {
                     stage={stage}
                     loans={stageLoans}
                     selectedLoanId={selectedLoanId}
-                    onSelectLoan={selectLoan}
+                    onSelectLoan={(id) => {
+                      setSelectedLoanIds(new Set());
+                      selectLoan(id);
+                    }}
                     activeId={activeId}
                     stageOverrides={stageOverrides}
                     keyboardFocusedLoanId={keyboardFocusedLoanId}
+                    selectedLoanIds={selectedLoanIds}
+                    onBulkToggle={handleBulkToggle}
                   />
                 );
               })}
@@ -381,6 +419,12 @@ export function Board({ currentView, onViewChange }: BoardProps) {
       {showNewLoanModal && (
         <NewLoanModal onClose={() => setShowNewLoanModal(false)} />
       )}
+
+      <BulkActionBar
+        count={selectedLoanIds.size}
+        onMoveToStage={handleBulkMoveToStage}
+        onClear={handleBulkClear}
+      />
     </>
   );
 }

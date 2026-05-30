@@ -108,12 +108,14 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 - **Comment reply / threading (lightweight)** — each comment now has a "Reply" link below Resolve/Unresolve. Clicking calls `onReply` with `@<INITIALS>: ` prefix. `CommentComposer` accepts `initialBody` + `onInitialBodyConsumed` props to pre-fill and auto-focus the textarea. `LoanDetailPanel` wires `replyPrefix` state between the two components. No nested thread UI — replies land flat in the list.
 - **Scorecard sidebar button on column headers** — stage-1 and stage-2 column headers show a 📊 icon button. Clicking toggles a floating popover (positioned below the header) that lazy-loads all loan scorecards via `Promise.all(getScorecard)` and displays: decision breakdown (Approved / Suspended / Denied / Unknown counts), average LTV, and count of loans with LTV > 70%. Stats computed purely from the `loans` prop (`computedLtv`) for LTV and service calls for decisions.
 
+### Session 2026-05-29 (bulk selection)
+- **Bulk actions** — shift-click any loan card toggles it into/out of a bulk selection set (`selectedLoanIds: Set<string>` in Board). A fixed floating action bar slides up from the bottom when any loans are selected, showing a count, a "Move to stage" dropdown (all 8 stages), and a "Clear" button. On stage select, all selected loans are moved via `service.moveLoanToStage`, `stageOverrides` updated, selection cleared, and a success toast fires. Normal click (no shift) clears bulk selection and opens the detail panel as usual. Teal ring (`ring-2 ring-[#4bce97]/60`) on bulk-selected cards.
+
 ---
 
 ## Future work (next sessions)
 
 ### Medium priority
-- [ ] **Bulk actions** — select multiple loans, move to stage. Shift-click to range-select, then a floating action bar appears with "Move to stage" dropdown.
 - [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry (HTML5 drag events, no real upload).
 - [ ] **Print / PDF view** — `window.print()` with a print-specific CSS stylesheet; printable loan summary sheet showing all key fields, step statuses, comments.
 - [ ] **Payoff approval template body** — drafted placeholder exists; fill in final wording once team confirms.

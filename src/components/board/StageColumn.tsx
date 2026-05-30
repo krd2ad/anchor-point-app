@@ -12,6 +12,8 @@ interface StageColumnProps {
   activeId: string | null;
   stageOverrides?: Map<string, string>;
   keyboardFocusedLoanId?: string | null;
+  selectedLoanIds?: Set<string>;
+  onBulkToggle?: (id: string) => void;
 }
 
 function formatPortfolioValue(total: number): string {
@@ -187,6 +189,8 @@ export function StageColumn({
   activeId,
   stageOverrides,
   keyboardFocusedLoanId,
+  selectedLoanIds,
+  onBulkToggle,
 }: StageColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: stage.id });
   const [showScorecard, setShowScorecard] = useState(false);
@@ -292,7 +296,9 @@ export function StageColumn({
               effectiveStageId={stageOverrides?.get(loan.id) ?? loan.stageId}
               isSelected={selectedLoanId === loan.id}
               isKeyboardFocused={keyboardFocusedLoanId === loan.id}
+              isBulkSelected={selectedLoanIds?.has(loan.id) ?? false}
               onSelect={() => onSelectLoan(loan.id)}
+              onBulkToggle={onBulkToggle}
             />
           ))
         )}
