@@ -112,16 +112,13 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 
 ## Future work (next sessions)
 
-### High priority
-- [ ] **Collateral value / LTV on card** — show computed LTV from scorecard on the loan card (useful for quick board-level assessment).
-
 ### Medium priority
-- [ ] **Bulk actions** — select multiple loans, move to stage, assign owner.
-- [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry.
-- [ ] **Files view: folder completion indicator** — per-loan overall completion percentage across all categories.
-- [ ] **Payoff approval template body** — fill in the TODO placeholder in `messageTemplates.ts` once the team confirms the wording.
+- [ ] **Bulk actions** — select multiple loans, move to stage. Shift-click to range-select, then a floating action bar appears with "Move to stage" dropdown.
+- [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry (HTML5 drag events, no real upload).
+- [ ] **Print / PDF view** — `window.print()` with a print-specific CSS stylesheet; printable loan summary sheet showing all key fields, step statuses, comments.
+- [ ] **Payoff approval template body** — drafted placeholder exists; fill in final wording once team confirms.
 
 ### Nice to have
-- [ ] **Dark/light mode toggle** — currently dark-only.
-- [ ] **Export to CSV** — download loan portfolio as spreadsheet.
-- [ ] **Print / PDF view** — printable loan summary sheet.
+- [ ] **Dark/light mode toggle** — currently dark-only. Would need a `theme` context and CSS variable swaps.
+- [ ] **LTV trend sparkline** — small chart on the loan card showing LTV change if the loan had prior valuations logged.
+- [ ] **Notification bell** — aggregate "actions due" count across all loans, surfaced in the header.
