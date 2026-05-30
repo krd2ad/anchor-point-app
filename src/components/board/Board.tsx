@@ -18,11 +18,14 @@ import { dueActions } from '../../lib/dates';
 import { useCommandPalette } from '../../context/CommandPaletteContext';
 import { BoardHeader, type AppView } from './BoardHeader';
 import { PortfolioBar } from './PortfolioBar';
+import { FilterBar, type BoardFilters, DEFAULT_FILTERS, filtersAreActive } from './FilterBar';
 import { StageColumn } from './StageColumn';
 import { LoanCard } from './LoanCard';
 import { BulkActionBar } from './BulkActionBar';
 import { NewLoanModal } from './NewLoanModal';
+import { LoanCompareModal } from './LoanCompareModal';
 import { PrintView } from './PrintView';
+import { loanRiskScore } from '../../lib/riskScore';
 import type { Loan } from '../../types';
 
 // Stage orders that require critical closing gates to be cleared
@@ -113,7 +116,7 @@ interface BoardProps {
 }
 
 export function Board({ currentView, onViewChange }: BoardProps) {
-  const { loans, loading } = useLoans();
+  const { loans, loading, refreshLoans } = useLoans();
   const { selectedLoanId, selectLoan, clearSelection } = useSelectedLoan();
   const service = useLoanService();
   const { showToast } = useToast();
@@ -121,10 +124,13 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const { open: openCommandPalette } = useCommandPalette();
 
   const [stageOverrides, setStageOverrides] = useState<Map<string, string>>(new Map());
+  const [starOverrides, setStarOverrides] = useState<Map<string, boolean>>(new Map());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);
   const [showNewLoanModal, setShowNewLoanModal] = useState(false);
   const [selectedLoanIds, setSelectedLoanIds] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<BoardFilters>(DEFAULT_FILTERS);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   // Keyboard navigation state
   const [keyboardFocusedLoanId, setKeyboardFocusedLoanId] = useState<string | null>(null);
@@ -166,6 +172,13 @@ export function Board({ currentView, onViewChange }: BoardProps) {
   const handleBulkClear = useCallback(() => {
     setSelectedLoanIds(new Set());
   }, []);
+
+  const handleStarToggled = useCallback((loan: Loan) => {
+    // Optimistic override so column re-sorts immediately
+    setStarOverrides((prev) => new Map(prev).set(loan.id, loan.isStarred ?? false));
+    // Refresh provider loans so CommandPalette and other consumers see the updated isStarred
+    refreshLoans();
+  }, [refreshLoans]);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -395,12 +408,45 @@ export function Board({ currentView, onViewChange }: BoardProps) {
             <PortfolioBar loans={loans} />
           )}
 
+          {currentView === 'board' && (
+            <FilterBar
+              filters={filters}
+              onChange={setFilters}
+              onClear={() => setFilters(DEFAULT_FILTERS)}
+            />
+          )}
+
           <div className="flex-1 overflow-x-auto">
             <div ref={boardRef} className="flex items-start px-2 py-4" style={{ minWidth: 'max-content', zoom }} tabIndex={-1}>
               {STAGES.map((stage) => {
-                const stageLoans = loans.filter(
+                const allStageLoans = loans.filter(
                   (l) => (stageOverrides.get(l.id) ?? l.stageId) === stage.id
                 );
+
+                // Apply filters
+                const activeFilters = filtersAreActive(filters);
+                const stageLoans = activeFilters
+                  ? allStageLoans.filter((loan) => {
+                      // Entity filter
+                      if (filters.entity !== 'all' && loan.lendingEntity !== filters.entity) return false;
+
+                      // Risk filter
+                      if (filters.risk !== 'all') {
+                        const riskLevel = loanRiskScore(loan).level;
+                        if (filters.risk === 'critical' && riskLevel !== 'critical') return false;
+                        if (filters.risk === 'high' && riskLevel !== 'high' && riskLevel !== 'critical') return false;
+                        if (filters.risk === 'medium' && riskLevel === 'low') return false;
+                      }
+
+                      // Unmet gates filter — show stage-3 loans only (conservative approximation)
+                      if (filters.hasUnmetGates && stage.id !== 'stage-3') return false;
+
+                      return true;
+                    })
+                  : allStageLoans;
+
+                const hiddenCount = allStageLoans.length - stageLoans.length;
+
                 return (
                   <StageColumn
                     key={stage.id}
@@ -416,6 +462,9 @@ export function Board({ currentView, onViewChange }: BoardProps) {
                     keyboardFocusedLoanId={keyboardFocusedLoanId}
                     selectedLoanIds={selectedLoanIds}
                     onBulkToggle={handleBulkToggle}
+                    hiddenCount={hiddenCount}
+                    starOverrides={starOverrides}
+                    onStarToggled={handleStarToggled}
                   />
                 );
               })}
@@ -449,9 +498,18 @@ export function Board({ currentView, onViewChange }: BoardProps) {
 
       <BulkActionBar
         count={selectedLoanIds.size}
+        selectedLoanIds={selectedLoanIds}
         onMoveToStage={handleBulkMoveToStage}
         onClear={handleBulkClear}
+        onCompare={() => setShowCompareModal(true)}
       />
+
+      {showCompareModal && (
+        <LoanCompareModal
+          loanIds={[...selectedLoanIds]}
+          onClose={() => setShowCompareModal(false)}
+        />
+      )}
 
       {/* Hidden on screen; visible only when printing */}
       <PrintView />

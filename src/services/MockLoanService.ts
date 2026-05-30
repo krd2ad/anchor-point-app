@@ -15,6 +15,8 @@ import type {
   MessageTemplate,
   ExternalParty,
   UnderwritingScorecard,
+  StageChangeEvent,
+  LoanNote,
 } from '../types';
 import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
@@ -30,6 +32,7 @@ import {
   SEED_COMMENTS,
   SEED_ATTACHMENTS,
   SEED_USERS,
+  SEED_STAGE_HISTORY,
 } from '../data/seed';
 
 export class MockLoanService implements LoanService {
@@ -40,6 +43,8 @@ export class MockLoanService implements LoanService {
   private stepStatuses = new Map<string, LoanStepStatus>();
   private comments    = new Map<string, Comment>();
   private attachments = new Map<string, Attachment>();
+  private stageHistory = new Map<string, StageChangeEvent[]>();
+  private notes       = new Map<string, LoanNote>();
 
   constructor() {
     for (const l  of SEED_LOANS)              this.loans.set(l.id, { ...l });
@@ -49,6 +54,23 @@ export class MockLoanService implements LoanService {
     for (const ss of SEED_STEP_STATUSES)      this.stepStatuses.set(ss.id, { ...ss });
     for (const c  of SEED_COMMENTS)           this.comments.set(c.id, { ...c });
     for (const a  of SEED_ATTACHMENTS)        this.attachments.set(a.id, { ...a });
+
+    // Seed stage history — group by loanId
+    for (const evt of SEED_STAGE_HISTORY) {
+      const existing = this.stageHistory.get(evt.loanId) ?? [];
+      existing.push({ ...evt });
+      this.stageHistory.set(evt.loanId, existing);
+    }
+
+    // Seed note for loan-4 (OH9 Holdings)
+    const loan4Note: LoanNote = {
+      id: 'note-loan-4',
+      loanId: 'loan-4',
+      body: 'Borrower has been unresponsive since Nov. Rivers to escalate to law firm if no response by month end.',
+      updatedAt: '2025-05-15T09:00:00.000Z',
+      updatedBy: SEED_USERS[0].id,
+    };
+    this.notes.set('loan-4', loan4Note);
   }
 
   // ─── Reads ──────────────────────────────────────────────────────────────────
@@ -109,8 +131,23 @@ export class MockLoanService implements LoanService {
   async moveLoanToStage(loanId: string, stageId: string): Promise<Loan> {
     const loan = this.loans.get(loanId);
     if (!loan) throw new Error(`Loan not found: ${loanId}`);
+    const fromStageId = loan.stageId;
     loan.stageId   = stageId;
-    loan.updatedAt = '2025-06-01T00:00:00.000Z';
+    loan.updatedAt = '2026-05-30T00:00:00.000Z';
+
+    // Record stage change event
+    const evt: StageChangeEvent = {
+      id: nanoid(),
+      loanId,
+      fromStageId,
+      toStageId: stageId,
+      movedAt: '2026-05-30T00:00:00.000Z',
+      movedBy: SEED_USERS[0].id,
+    };
+    const history = this.stageHistory.get(loanId) ?? [];
+    history.push(evt);
+    this.stageHistory.set(loanId, history);
+
     return Promise.resolve({ ...loan });
   }
 
@@ -254,6 +291,37 @@ export class MockLoanService implements LoanService {
     return Promise.resolve(
       [...this.attachments.values()].filter(a => a.loanId === loanId)
     );
+  }
+
+  async getStageHistory(loanId: string): Promise<StageChangeEvent[]> {
+    const events = this.stageHistory.get(loanId) ?? [];
+    return Promise.resolve(
+      [...events].sort((a, b) => new Date(a.movedAt).getTime() - new Date(b.movedAt).getTime())
+    );
+  }
+
+  async getNote(loanId: string): Promise<LoanNote | null> {
+    return Promise.resolve(this.notes.get(loanId) ?? null);
+  }
+
+  async saveNote(loanId: string, body: string): Promise<LoanNote> {
+    const existing = this.notes.get(loanId);
+    const note: LoanNote = {
+      id: existing?.id ?? nanoid(),
+      loanId,
+      body,
+      updatedAt: new Date().toISOString(),
+      updatedBy: SEED_USERS[0].id,
+    };
+    this.notes.set(loanId, note);
+    return Promise.resolve({ ...note });
+  }
+
+  async toggleStar(loanId: string): Promise<Loan> {
+    const loan = this.loans.get(loanId);
+    if (!loan) throw new Error(`Loan not found: ${loanId}`);
+    loan.isStarred = !loan.isStarred;
+    return Promise.resolve({ ...loan });
   }
 
   async renderTemplate(

@@ -3,11 +3,13 @@ import { STAGES } from '../../data/stages';
 
 interface BulkActionBarProps {
   count: number;
+  selectedLoanIds?: Set<string>;
   onMoveToStage: (stageId: string) => void;
   onClear: () => void;
+  onCompare?: () => void;
 }
 
-export function BulkActionBar({ count, onMoveToStage, onClear }: BulkActionBarProps) {
+export function BulkActionBar({ count, onMoveToStage, onClear, onCompare }: BulkActionBarProps) {
   const [selectOpen, setSelectOpen] = useState(false);
 
   const isVisible = count > 0;
@@ -78,6 +80,20 @@ export function BulkActionBar({ count, onMoveToStage, onClear }: BulkActionBarPr
           </>
         )}
       </div>
+
+      {/* Compare button — enabled for 2–4 loans */}
+      {onCompare && count >= 2 && count <= 4 && (
+        <button
+          onClick={onCompare}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-[#b6c2cf] bg-[#2d3748] border border-[#454f59] hover:border-[#6b7a8d] hover:text-[#e8ecf0] transition-colors flex-shrink-0"
+        >
+          <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5">
+            <rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.25"/>
+            <rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.25"/>
+          </svg>
+          Compare
+        </button>
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />

@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import type { Comment, LoanStepStatus } from '../../types';
+import type { Comment, LoanStepStatus, StageChangeEvent } from '../../types';
 import { STAGE_STEPS } from '../../data/stageSteps';
 import { STAGES } from '../../data/stages';
 
 interface ActivityTimelineProps {
   comments: Comment[];
   stepStatuses: LoanStepStatus[];
+  stageHistory?: StageChangeEvent[];
 }
 
 type ActivityEvent =
   | { kind: 'comment'; id: string; body: string; authorId: string; stageId: string; resolved: boolean; ts: string }
-  | { kind: 'step'; id: string; stepId: string; ts: string };
+  | { kind: 'step'; id: string; stepId: string; ts: string }
+  | { kind: 'stageChange'; id: string; fromStageId: string; toStageId: string; ts: string };
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -27,7 +29,7 @@ function avatarColor(id: string): string {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
-export function ActivityTimeline({ comments, stepStatuses }: ActivityTimelineProps) {
+export function ActivityTimeline({ comments, stepStatuses, stageHistory }: ActivityTimelineProps) {
   const [showAll, setShowAll] = useState(false);
 
   const stepMap = new Map(STAGE_STEPS.map(s => [s.id, s]));
@@ -43,6 +45,12 @@ export function ActivityTimeline({ comments, stepStatuses }: ActivityTimelinePro
   for (const ss of stepStatuses) {
     if (ss.status === 'done' && ss.completedAt) {
       events.push({ kind: 'step', id: ss.id, stepId: ss.stepId, ts: ss.completedAt });
+    }
+  }
+
+  if (stageHistory) {
+    for (const evt of stageHistory) {
+      events.push({ kind: 'stageChange', id: evt.id, fromStageId: evt.fromStageId, toStageId: evt.toStageId, ts: evt.movedAt });
     }
   }
 
@@ -75,7 +83,12 @@ export function ActivityTimeline({ comments, stepStatuses }: ActivityTimelinePro
               {/* Dot */}
               <span
                 className="absolute -left-[21px] top-1 w-2 h-2 rounded-full border-2 border-[#282e33]"
-                style={{ backgroundColor: evt.kind === 'comment' ? '#579dff' : '#4bce97' }}
+                style={{
+                  backgroundColor:
+                    evt.kind === 'comment' ? '#579dff' :
+                    evt.kind === 'stageChange' ? '#9f8fef' :
+                    '#4bce97'
+                }}
               />
 
               {evt.kind === 'comment' ? (
@@ -102,6 +115,23 @@ export function ActivityTimeline({ comments, stepStatuses }: ActivityTimelinePro
                     <span className="text-[10px] text-[#4d5f6e] ml-auto flex-shrink-0">{fmtDate(evt.ts)}</span>
                   </div>
                   <p className="text-xs text-[#b6c2cf] leading-snug line-clamp-2">{evt.body}</p>
+                </div>
+              ) : evt.kind === 'stageChange' ? (
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] flex-shrink-0">🔀</span>
+                    <span className="text-xs text-[#7a8899] leading-snug flex-1 min-w-0">
+                      <span className="text-[#b6c2cf]">Moved from </span>
+                      <span style={{ color: stageMap.get(evt.fromStageId)?.color ?? '#b6c2cf' }}>
+                        {stageMap.get(evt.fromStageId)?.name ?? evt.fromStageId}
+                      </span>
+                      <span className="text-[#b6c2cf]"> → </span>
+                      <span style={{ color: stageMap.get(evt.toStageId)?.color ?? '#b6c2cf' }}>
+                        {stageMap.get(evt.toStageId)?.name ?? evt.toStageId}
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-[#4d5f6e] flex-shrink-0">{fmtDate(evt.ts)}</span>
+                  </div>
                 </div>
               ) : (
                 <div>

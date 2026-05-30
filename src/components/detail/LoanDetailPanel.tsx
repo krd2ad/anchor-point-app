@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { LoanDetail, Comment } from '../../types';
+import type { LoanDetail, Comment, StageChangeEvent } from '../../types';
 import { useSelectedLoan, useLoanService } from '../../context/LoanServiceProvider';
 import { LoanSummary } from './LoanSummary';
 import { StageStepChecklist } from './StageStepChecklist';
@@ -8,6 +8,7 @@ import { CommentList } from './CommentList';
 import { CommentComposer } from './CommentComposer';
 import { AttachmentList } from './AttachmentList';
 import { ActivityTimeline } from './ActivityTimeline';
+import { LoanNote } from './LoanNote';
 import { dueActions } from '../../lib/dates';
 
 function Divider() {
@@ -33,10 +34,13 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
   const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
   const [loading, setLoading]       = useState(false);
   const [comments, setComments]     = useState<Comment[]>([]);
+  const [stageHistory, setStageHistory] = useState<StageChangeEvent[]>([]);
   // Track whether we're actually open (for animation purposes)
   const [isOpen, setIsOpen]         = useState(false);
   // Reply prefix for the composer (set by CommentList → cleared after CommentComposer consumes it)
   const [replyPrefix, setReplyPrefix] = useState<string | undefined>(undefined);
+  // Star state (separate so it can be toggled without re-fetching full detail)
+  const [isStarred, setIsStarred]   = useState(false);
 
   const handleReply = useCallback((prefix: string) => {
     setReplyPrefix(prefix);
@@ -48,17 +52,30 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
       setIsOpen(false);
       setLoanDetail(null);
       setComments([]);
+      setStageHistory([]);
       return;
     }
 
     setIsOpen(true);
     setLoading(true);
-    service.getLoan(selectedLoanId).then((detail) => {
+    Promise.all([
+      service.getLoan(selectedLoanId),
+      service.getStageHistory(selectedLoanId),
+    ]).then(([detail, history]) => {
       setLoanDetail(detail);
       setComments(detail.comments);
+      setStageHistory(history);
+      setIsStarred(detail.loan.isStarred ?? false);
       setLoading(false);
     });
   }, [selectedLoanId, service]);
+
+  function handleToggleStar() {
+    if (!selectedLoanId) return;
+    service.toggleStar(selectedLoanId).then((updated) => {
+      setIsStarred(updated.isStarred ?? false);
+    });
+  }
 
   // Don't render the overlay/panel at all when nothing is selected
   if (!selectedLoanId) return null;
@@ -100,20 +117,39 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
         {/* Panel header with close button */}
         <div className="flex items-center justify-between p-4 sticky top-0 bg-[#282e33] z-10 border-b border-[#3d4b5c]">
           <h2 className="text-sm font-semibold text-[#e8ecf0]">Loan Detail</h2>
-          <button
-            onClick={clearSelection}
-            className="w-7 h-7 flex items-center justify-center rounded-md text-[#7a8899] hover:text-[#e8ecf0] hover:bg-[#3d4b5c] transition-colors"
-            aria-label="Close panel"
-          >
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
-              <path
-                d="M4 4l8 8M12 4l-8 8"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Star button */}
+            <button
+              onClick={handleToggleStar}
+              className="w-7 h-7 flex items-center justify-center rounded-md transition-colors hover:bg-[#3d4b5c]"
+              aria-label={isStarred ? 'Unstar loan' : 'Star loan'}
+              title={isStarred ? 'Remove from watchlist' : 'Add to watchlist'}
+            >
+              {isStarred ? (
+                <svg viewBox="0 0 16 16" fill="#f5cd47" className="w-4 h-4 text-[#f5cd47]">
+                  <path d="M8 1.5l1.84 3.73 4.12.6-2.98 2.9.7 4.1L8 10.77l-3.68 1.93.7-4.1L2.04 5.83l4.12-.6L8 1.5z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-[#5d6f7e] hover:text-[#f5cd47] transition-colors">
+                  <path d="M8 1.5l1.84 3.73 4.12.6-2.98 2.9.7 4.1L8 10.77l-3.68 1.93.7-4.1L2.04 5.83l4.12-.6L8 1.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={clearSelection}
+              className="w-7 h-7 flex items-center justify-center rounded-md text-[#7a8899] hover:text-[#e8ecf0] hover:bg-[#3d4b5c] transition-colors"
+              aria-label="Close panel"
+            >
+              <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+                <path
+                  d="M4 4l8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Panel body */}
@@ -165,6 +201,11 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
 
             <Divider />
 
+            {/* Notes */}
+            <LoanNote loanId={loanDetail.loan.id} />
+
+            <Divider />
+
             {/* Stage switcher (all 7 stages, browsable) */}
             <StageSwitcher
               loanId={loanDetail.loan.id}
@@ -206,6 +247,7 @@ export function LoanDetailPanel({ onOpenInFiles }: LoanDetailPanelProps) {
             <ActivityTimeline
               comments={comments}
               stepStatuses={loanDetail.stepStatuses}
+              stageHistory={stageHistory}
             />
           </div>
         )}

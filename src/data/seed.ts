@@ -7,6 +7,7 @@ import type {
   LoanStepStatus,
   Comment,
   Attachment,
+  StageChangeEvent,
 } from '../types';
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -511,6 +512,49 @@ export const SEED_COMMENTS: Comment[] = [
   // loan-8 (stage-8, Completed/Paid Off)
   { id: 'comment-8a', loanId: 'loan-8', stageId: 'stage-3', authorId: 'user-1', body: 'Loan funded successfully — all docs in order.', resolved: true,  createdAt: '2024-03-16T14:00:00.000Z' },
   { id: 'comment-8b', loanId: 'loan-8', stageId: 'stage-8', authorId: 'user-1', body: 'Lien release confirmed by NSC. Loan fully closed.', resolved: false, createdAt: '2025-05-01T10:00:00.000Z' },
+];
+
+// ─── Stage History ────────────────────────────────────────────────────────────
+// Plausible stage transitions for funded/late-stage loans (stages 4–8).
+// Dates are derived from loan origination / closing / funded dates.
+
+export const SEED_STAGE_HISTORY: StageChangeEvent[] = [
+  // ── loan-4 (OH9 Holdings, stage-6) — originated 2024-08-01, closed 2024-08-15, funded 2024-08-16
+  { id: 'sh-4-1', loanId: 'loan-4', fromStageId: 'stage-1', toStageId: 'stage-2', movedAt: '2024-07-22T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-4-2', loanId: 'loan-4', fromStageId: 'stage-2', toStageId: 'stage-3', movedAt: '2024-08-01T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-4-3', loanId: 'loan-4', fromStageId: 'stage-3', toStageId: 'stage-4', movedAt: '2024-08-15T16:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-4-4', loanId: 'loan-4', fromStageId: 'stage-4', toStageId: 'stage-5', movedAt: '2024-08-26T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-4-5', loanId: 'loan-4', fromStageId: 'stage-5', toStageId: 'stage-6', movedAt: '2024-10-05T09:00:00.000Z', movedBy: 'user-1' },
+
+  // ── loan-5 (CR LJFB LLC, stage-6) — originated 2024-09-05, closed 2024-09-20, funded 2024-09-21
+  { id: 'sh-5-1', loanId: 'loan-5', fromStageId: 'stage-1', toStageId: 'stage-2', movedAt: '2024-08-28T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-5-2', loanId: 'loan-5', fromStageId: 'stage-2', toStageId: 'stage-3', movedAt: '2024-09-05T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-5-3', loanId: 'loan-5', fromStageId: 'stage-3', toStageId: 'stage-4', movedAt: '2024-09-20T16:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-5-4', loanId: 'loan-5', fromStageId: 'stage-4', toStageId: 'stage-5', movedAt: '2024-09-28T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-5-5', loanId: 'loan-5', fromStageId: 'stage-5', toStageId: 'stage-6', movedAt: '2024-11-15T09:00:00.000Z', movedBy: 'user-1' },
+
+  // ── loan-6 (Wabash Crossing, stage-7) — originated 2024-05-01, closed 2024-05-15, funded 2024-05-16
+  { id: 'sh-6-1', loanId: 'loan-6', fromStageId: 'stage-1', toStageId: 'stage-2', movedAt: '2024-04-20T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-6-2', loanId: 'loan-6', fromStageId: 'stage-2', toStageId: 'stage-3', movedAt: '2024-05-01T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-6-3', loanId: 'loan-6', fromStageId: 'stage-3', toStageId: 'stage-4', movedAt: '2024-05-15T16:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-6-4', loanId: 'loan-6', fromStageId: 'stage-4', toStageId: 'stage-5', movedAt: '2024-05-22T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-6-5', loanId: 'loan-6', fromStageId: 'stage-5', toStageId: 'stage-6', movedAt: '2024-09-10T09:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-6-6', loanId: 'loan-6', fromStageId: 'stage-6', toStageId: 'stage-7', movedAt: '2025-01-10T08:00:00.000Z', movedBy: 'user-1' },
+
+  // ── loan-7 (Ski Resort Chewelah, stage-7) — originated 2024-06-01, closed 2024-06-20, funded 2024-06-21
+  { id: 'sh-7-1', loanId: 'loan-7', fromStageId: 'stage-1', toStageId: 'stage-2', movedAt: '2024-05-25T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-7-2', loanId: 'loan-7', fromStageId: 'stage-2', toStageId: 'stage-3', movedAt: '2024-06-01T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-7-3', loanId: 'loan-7', fromStageId: 'stage-3', toStageId: 'stage-4', movedAt: '2024-06-20T16:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-7-4', loanId: 'loan-7', fromStageId: 'stage-4', toStageId: 'stage-5', movedAt: '2024-06-28T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-7-5', loanId: 'loan-7', fromStageId: 'stage-5', toStageId: 'stage-6', movedAt: '2024-11-01T09:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-7-6', loanId: 'loan-7', fromStageId: 'stage-6', toStageId: 'stage-7', movedAt: '2025-01-20T09:00:00.000Z', movedBy: 'user-1' },
+
+  // ── loan-8 (Riverstone Capital, stage-8) — closed 2024-03-15, funded 2024-03-16
+  { id: 'sh-8-1', loanId: 'loan-8', fromStageId: 'stage-1', toStageId: 'stage-2', movedAt: '2024-02-20T10:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-8-2', loanId: 'loan-8', fromStageId: 'stage-2', toStageId: 'stage-3', movedAt: '2024-02-26T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-8-3', loanId: 'loan-8', fromStageId: 'stage-3', toStageId: 'stage-4', movedAt: '2024-03-15T16:00:00.000Z', movedBy: 'user-1' },
+  { id: 'sh-8-4', loanId: 'loan-8', fromStageId: 'stage-4', toStageId: 'stage-5', movedAt: '2024-03-22T10:00:00.000Z', movedBy: 'user-2' },
+  { id: 'sh-8-5', loanId: 'loan-8', fromStageId: 'stage-5', toStageId: 'stage-8', movedAt: '2025-03-10T09:00:00.000Z', movedBy: 'user-1' },
 ];
 
 // ─── Attachments ──────────────────────────────────────────────────────────────

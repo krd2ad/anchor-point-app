@@ -15,6 +15,8 @@ interface LoanCardProps {
   isKeyboardFocused?: boolean;
   isBulkSelected?: boolean;
   onBulkToggle?: (id: string) => void;
+  isStarred?: boolean;
+  onStarToggled?: (loan: Loan) => void;
 }
 
 function formatAmount(amount: number): string {
@@ -34,7 +36,7 @@ for (const step of STAGE_STEPS) {
   }
 }
 
-export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false, isBulkSelected = false, onBulkToggle }: LoanCardProps) {
+export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effectiveStageId, isKeyboardFocused = false, isBulkSelected = false, onBulkToggle, isStarred: isStarredProp, onStarToggled }: LoanCardProps) {
   const service = useLoanService();
   const [doneCount, setDoneCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -43,6 +45,9 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
   // Use effectiveStageId (post-drag override) when present, fall back to loan.stageId
   const activeStageId = effectiveStageId ?? loan.stageId;
   const stage = STAGES.find(s => s.id === activeStageId);
+
+  // Effective isStarred: prop override (from Board) takes precedence over loan.isStarred
+  const effectiveIsStarred = isStarredProp !== undefined ? isStarredProp : (loan.isStarred ?? false);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: loan.id,
@@ -97,6 +102,13 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
     }
   }
 
+  function handleStarClick(e: MouseEvent) {
+    e.stopPropagation();
+    service.toggleStar(loan.id).then((updated) => {
+      onStarToggled?.(updated);
+    });
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -104,7 +116,7 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
       {...attributes}
       onClick={handleClick}
       className={[
-        'bg-[#22272b] border rounded-md p-3 mb-2 transition-all duration-100 select-none',
+        'group bg-[#22272b] border rounded-md p-3 mb-2 transition-all duration-100 select-none',
         isOverlay
           ? 'border-[#579dff] shadow-2xl cursor-grabbing rotate-1 opacity-95'
           : isDragging
@@ -151,6 +163,26 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
             title={`${risk.level.charAt(0).toUpperCase() + risk.level.slice(1)} risk: ${risk.reasons.join(', ')}`}
           />
         )}
+        {/* Star button */}
+        {!isOverlay && (
+          <button
+            onClick={handleStarClick}
+            className="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded transition-opacity opacity-0 group-hover:opacity-100 focus:opacity-100"
+            style={{ opacity: effectiveIsStarred ? 1 : undefined }}
+            aria-label={effectiveIsStarred ? 'Unstar' : 'Star'}
+            title={effectiveIsStarred ? 'Remove from watchlist' : 'Add to watchlist'}
+          >
+            {effectiveIsStarred ? (
+              <svg viewBox="0 0 12 12" fill="#f5cd47" className="w-3 h-3">
+                <path d="M6 1l1.38 2.79 3.09.45-2.24 2.18.53 3.08L6 8.11 3.24 9.5l.53-3.08L1.53 4.24l3.09-.45L6 1z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3 text-[#5d6f7e]">
+                <path d="M6 1l1.38 2.79 3.09.45-2.24 2.18.53 3.08L6 8.11 3.24 9.5l.53-3.08L1.53 4.24l3.09-.45L6 1z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Amount + entity badge */}
@@ -191,20 +223,44 @@ export function LoanCard({ loan, isSelected, onSelect, isOverlay = false, effect
         </div>
       )}
 
-      {/* Step progress */}
-      {!isOverlay && totalCount > 0 && (
+      {/* Step progress + days-in-stage badge */}
+      {!isOverlay && !isComplete && (
         <div className="flex items-center gap-2 mt-1 pl-3">
-          <div className="flex-1 h-1 bg-[#454f59] rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${progressPct}%`, backgroundColor: progressColor }}
-            />
-          </div>
-          <span className="text-[#8c9bab] text-[10px] font-mono whitespace-nowrap">
-            {doneCount}/{totalCount}
-          </span>
+          {totalCount > 0 ? (
+            <>
+              <div className="flex-1 h-1 bg-[#454f59] rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${progressPct}%`, backgroundColor: progressColor }}
+                />
+              </div>
+              <span className="text-[#8c9bab] text-[10px] font-mono whitespace-nowrap">
+                {doneCount}/{totalCount}
+              </span>
+            </>
+          ) : (
+            <div className="flex-1" />
+          )}
+          <DaysInStageBadge updatedAt={loan.updatedAt} />
         </div>
       )}
     </div>
+  );
+}
+
+function DaysInStageBadge({ updatedAt }: { updatedAt: string }) {
+  const days = Math.floor(
+    (Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const colorClass =
+    days >= 31 ? 'text-orange-400' :
+    days >= 8  ? 'text-yellow-400' :
+    'text-[#5d6f7e]';
+
+  return (
+    <span className={`text-[10px] font-mono whitespace-nowrap flex-shrink-0 ${colorClass}`}>
+      {days}d
+    </span>
   );
 }

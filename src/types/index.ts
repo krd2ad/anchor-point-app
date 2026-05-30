@@ -95,6 +95,7 @@ export interface Loan {
   titleCompanyId?: string;                // → ExternalParty
   hasDrawProgram?: boolean;
   computedLtv?: number;   // loanAmount / totalParcelValuation — populated by service on read
+  isStarred?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -212,6 +213,27 @@ export interface UnderwritingScorecard {
   rules: ScorecardRuleResult[];
   decision: ScorecardDecision;
   deviations: string[];
+}
+
+// ─── StageChangeEvent ──────────────────────────────────────────────────────────
+
+export interface StageChangeEvent {
+  id: string;
+  loanId: string;
+  fromStageId: string;
+  toStageId: string;
+  movedAt: string; // ISO
+  movedBy: string; // userId
+}
+
+// ─── LoanNote ─────────────────────────────────────────────────────────────────
+
+export interface LoanNote {
+  id: string;
+  loanId: string;
+  body: string;
+  updatedAt: string;
+  updatedBy: string;
 }
 
 // ─── LoanDetail aggregate ──────────────────────────────────────────────────────

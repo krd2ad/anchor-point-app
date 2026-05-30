@@ -10,6 +10,8 @@ import type {
   ExternalParty,
   UnderwritingScorecard,
   Attachment,
+  StageChangeEvent,
+  LoanNote,
 } from '../types';
 
 export interface LoanService {
@@ -39,4 +41,14 @@ export interface LoanService {
   // ── Attachment reads (Files Explorer) ────────────────────────────────────────
   getAllAttachments(): Promise<Attachment[]>;
   getAttachmentsForLoan(loanId: string): Promise<Attachment[]>;
+
+  // ── Stage history ─────────────────────────────────────────────────────────────
+  getStageHistory(loanId: string): Promise<StageChangeEvent[]>;
+
+  // ── Loan notes ────────────────────────────────────────────────────────────────
+  getNote(loanId: string): Promise<LoanNote | null>;
+  saveNote(loanId: string, body: string): Promise<LoanNote>;
+
+  // ── Watchlist / starred ───────────────────────────────────────────────────────
+  toggleStar(loanId: string): Promise<Loan>;
 }

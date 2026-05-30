@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLoans } from '../../context/LoanServiceProvider';
 import { useCommandPalette } from '../../context/CommandPaletteContext';
 import { STAGES } from '../../data/stages';
@@ -29,6 +29,9 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  // Starred loans (always shown at top regardless of query)
+  const starredLoans = loans.filter((l) => l.isStarred);
+
   // Filter + sort loans
   const filtered = (() => {
     const q = query.trim().toLowerCase();
@@ -51,6 +54,13 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
     return list.slice(0, 8);
   })();
 
+  // For keyboard navigation: combine starred + filtered (de-duped if starred also appears in filtered)
+  const starredIds = new Set(starredLoans.map((l) => l.id));
+  const allResults: Array<{ loan: Loan; section: 'starred' | 'results' }> = [
+    ...starredLoans.map((l) => ({ loan: l, section: 'starred' as const })),
+    ...filtered.filter((l) => !starredIds.has(l.id)).map((l) => ({ loan: l, section: 'results' as const })),
+  ];
+
   // Reset on open/close
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +79,7 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
   // Scroll active item into view
   useEffect(() => {
     if (!listRef.current) return;
-    const items = listRef.current.querySelectorAll('li');
+    const items = listRef.current.querySelectorAll('li[data-result]');
     if (items[activeIdx]) {
       items[activeIdx].scrollIntoView({ block: 'nearest' });
     }
@@ -86,13 +96,13 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, filtered.length - 1));
+      setActiveIdx((i) => Math.min(i + 1, allResults.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filtered[activeIdx]) select(filtered[activeIdx]);
+      if (allResults[activeIdx]) select(allResults[activeIdx].loan);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       close();
@@ -139,61 +149,110 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
           ref={listRef}
           className="overflow-y-auto flex-1"
         >
-          {filtered.length === 0 ? (
+          {allResults.length === 0 ? (
             <li className="px-4 py-8 text-center text-[#5d6f7e] text-sm">
               No loans found
             </li>
           ) : (
-            filtered.map((loan, idx) => {
-              const stage = STAGES.find((s) => s.id === loan.stageId);
-              const isActive = idx === activeIdx;
-              return (
-                <li
-                  key={loan.id}
-                  onMouseEnter={() => setActiveIdx(idx)}
-                  onMouseDown={() => select(loan)}
-                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
-                    isActive ? 'bg-[#2d3748]' : 'hover:bg-[#282e33]'
-                  }`}
-                >
-                  {/* Stage color dot */}
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: stage?.color ?? '#7a8899' }}
-                  />
+            (() => {
+              let globalIdx = -1;
+              const items: React.ReactNode[] = [];
 
-                  {/* Label */}
-                  <span className="flex-1 text-sm font-semibold text-[#e8ecf0] truncate">
-                    {loan.displayLabel}
-                  </span>
-
-                  {/* Amount */}
-                  <span className="text-xs font-mono text-[#b6c2cf] flex-shrink-0">
-                    {formatAmount(loan.loanAmount)}
-                  </span>
-
-                  {/* Stage name */}
-                  <span className="text-[11px] text-[#7a8899] flex-shrink-0 hidden sm:block">
-                    {stage?.name ?? loan.stageId}
-                  </span>
-
-                  {/* LTV */}
-                  {loan.computedLtv != null && (
-                    <span
-                      className={`text-[11px] font-mono flex-shrink-0 ${
-                        loan.computedLtv > 0.7
-                          ? 'text-[#f87168]'
-                          : loan.computedLtv > 0.65
-                          ? 'text-[#f5cd47]'
-                          : 'text-[#4bce97]'
+              // Starred section
+              if (starredLoans.length > 0) {
+                items.push(
+                  <li key="__starred-header" className="px-4 pt-2 pb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#f5cd47]/70">
+                      Starred
+                    </span>
+                  </li>
+                );
+                for (const loan of starredLoans) {
+                  globalIdx++;
+                  const idx = globalIdx;
+                  const stage = STAGES.find((s) => s.id === loan.stageId);
+                  const isActive = idx === activeIdx;
+                  items.push(
+                    <li
+                      key={`starred-${loan.id}`}
+                      data-result
+                      onMouseEnter={() => setActiveIdx(idx)}
+                      onMouseDown={() => select(loan)}
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
+                        isActive ? 'bg-[#2d3748]' : 'hover:bg-[#282e33]'
                       }`}
                     >
-                      {(loan.computedLtv * 100).toFixed(0)}% LTV
-                    </span>
-                  )}
-                </li>
-              );
-            })
+                      <span className="text-[11px] flex-shrink-0">⭐</span>
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: stage?.color ?? '#7a8899' }}
+                      />
+                      <span className="flex-1 text-sm font-semibold text-[#e8ecf0] truncate">{loan.displayLabel}</span>
+                      <span className="text-xs font-mono text-[#b6c2cf] flex-shrink-0">{formatAmount(loan.loanAmount)}</span>
+                      <span className="text-[11px] text-[#7a8899] flex-shrink-0 hidden sm:block">{stage?.name ?? loan.stageId}</span>
+                    </li>
+                  );
+                }
+              }
+
+              // Main results section (excluding starred loans already shown)
+              const mainResults = filtered.filter((l) => !starredIds.has(l.id));
+              if (mainResults.length > 0) {
+                if (starredLoans.length > 0) {
+                  items.push(
+                    <li key="__results-header" className="px-4 pt-2 pb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5d6f7e]">
+                        All Loans
+                      </span>
+                    </li>
+                  );
+                }
+                for (const loan of mainResults) {
+                  globalIdx++;
+                  const idx = globalIdx;
+                  const stage = STAGES.find((s) => s.id === loan.stageId);
+                  const isActive = idx === activeIdx;
+                  items.push(
+                    <li
+                      key={`result-${loan.id}`}
+                      data-result
+                      onMouseEnter={() => setActiveIdx(idx)}
+                      onMouseDown={() => select(loan)}
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
+                        isActive ? 'bg-[#2d3748]' : 'hover:bg-[#282e33]'
+                      }`}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: stage?.color ?? '#7a8899' }}
+                      />
+                      <span className="flex-1 text-sm font-semibold text-[#e8ecf0] truncate">{loan.displayLabel}</span>
+                      <span className="text-xs font-mono text-[#b6c2cf] flex-shrink-0">{formatAmount(loan.loanAmount)}</span>
+                      <span className="text-[11px] text-[#7a8899] flex-shrink-0 hidden sm:block">{stage?.name ?? loan.stageId}</span>
+                      {loan.computedLtv != null && (
+                        <span className={`text-[11px] font-mono flex-shrink-0 ${
+                          loan.computedLtv > 0.7 ? 'text-[#f87168]' :
+                          loan.computedLtv > 0.65 ? 'text-[#f5cd47]' : 'text-[#4bce97]'
+                        }`}>
+                          {(loan.computedLtv * 100).toFixed(0)}% LTV
+                        </span>
+                      )}
+                    </li>
+                  );
+                }
+              }
+
+              // If no starred and no main results
+              if (items.length === 0) {
+                items.push(
+                  <li key="empty" className="px-4 py-8 text-center text-[#5d6f7e] text-sm">
+                    No loans found
+                  </li>
+                );
+              }
+
+              return items;
+            })()
           )}
         </ul>
 
@@ -202,7 +261,7 @@ export function CommandPalette({ onNavigateToLoan }: CommandPaletteProps) {
           <span><kbd className="font-mono">↑↓</kbd> navigate</span>
           <span><kbd className="font-mono">↵</kbd> open</span>
           <span><kbd className="font-mono">esc</kbd> close</span>
-          <span className="ml-auto">{filtered.length} loan{filtered.length !== 1 ? 's' : ''}</span>
+          <span className="ml-auto">{allResults.length} loan{allResults.length !== 1 ? 's' : ''}</span>
         </div>
       </div>
     </div>

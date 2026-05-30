@@ -14,6 +14,9 @@ interface StageColumnProps {
   keyboardFocusedLoanId?: string | null;
   selectedLoanIds?: Set<string>;
   onBulkToggle?: (id: string) => void;
+  hiddenCount?: number;
+  starOverrides?: Map<string, boolean>;
+  onStarToggled?: (loan: Loan) => void;
 }
 
 function formatPortfolioValue(total: number): string {
@@ -191,6 +194,9 @@ export function StageColumn({
   keyboardFocusedLoanId,
   selectedLoanIds,
   onBulkToggle,
+  hiddenCount = 0,
+  starOverrides,
+  onStarToggled,
 }: StageColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: stage.id });
   const [showScorecard, setShowScorecard] = useState(false);
@@ -264,6 +270,11 @@ export function StageColumn({
           >
             {loans.length}
           </span>
+          {hiddenCount > 0 && (
+            <span className="text-[9px] text-[#f5cd47] bg-[#f5cd47]/10 border border-[#f5cd47]/30 rounded-full px-1.5 py-0.5 font-medium whitespace-nowrap">
+              {hiddenCount} hidden
+            </span>
+          )}
         </div>
 
         {/* Stage-level portfolio value metric */}
@@ -289,18 +300,29 @@ export function StageColumn({
             No loans
           </p>
         ) : (
-          loans.map((loan) => (
-            <LoanCard
-              key={loan.id}
-              loan={loan}
-              effectiveStageId={stageOverrides?.get(loan.id) ?? loan.stageId}
-              isSelected={selectedLoanId === loan.id}
-              isKeyboardFocused={keyboardFocusedLoanId === loan.id}
-              isBulkSelected={selectedLoanIds?.has(loan.id) ?? false}
-              onSelect={() => onSelectLoan(loan.id)}
-              onBulkToggle={onBulkToggle}
-            />
-          ))
+          [...loans]
+            .sort((a, b) => {
+              // Starred loans sort to the top within each column
+              const aStarred = starOverrides?.get(a.id) ?? a.isStarred ?? false;
+              const bStarred = starOverrides?.get(b.id) ?? b.isStarred ?? false;
+              if (aStarred && !bStarred) return -1;
+              if (!aStarred && bStarred) return 1;
+              return 0;
+            })
+            .map((loan) => (
+              <LoanCard
+                key={loan.id}
+                loan={loan}
+                effectiveStageId={stageOverrides?.get(loan.id) ?? loan.stageId}
+                isSelected={selectedLoanId === loan.id}
+                isKeyboardFocused={keyboardFocusedLoanId === loan.id}
+                isBulkSelected={selectedLoanIds?.has(loan.id) ?? false}
+                onSelect={() => onSelectLoan(loan.id)}
+                onBulkToggle={onBulkToggle}
+                isStarred={starOverrides?.has(loan.id) ? starOverrides.get(loan.id) : loan.isStarred}
+                onStarToggled={onStarToggled}
+              />
+            ))
         )}
       </div>
     </div>
