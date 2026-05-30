@@ -34,6 +34,7 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 | `src/lib/underwriting.ts` | Bridge Loan Program rules, scorecard builder, state risk buckets |
 | `src/lib/dates.ts` | firstPaymentDate, nscSetupSendDate, dueActions |
 | `src/lib/fileTree.ts` | Pure file tree builder (loan → category → file) |
+| `src/components/shared/Toast.tsx` | Toast notification system (ToastProvider + useToast hook) |
 
 ## Guardrails
 - Components import only from the provider/interface — never directly from MockLoanService or seed files
@@ -95,21 +96,23 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 - State foreclosure risk buckets (35 lending states)
 - Date helpers: firstPaymentDate, NSC setup send date, due-action schedule
 
+### Session 2026-05-29 (5 items)
+- **LoanCard step progress refresh after stage move** — added `effectiveStageId` prop to LoanCard; Board passes `stageOverrides.get(loan.id) ?? loan.stageId` through StageColumn so the progress bar and step counts update immediately after drag, before the provider re-fetches.
+- **Stage-8 (Completed) visual treatment** — column bg darkened to `#1d2125`, header uses italic text + checkmark icon prefix, count badge uses muted green instead of stage color.
+- **Stage-level metrics in column header** — total portfolio value (e.g. "$1.3M total") shown below stage name when loans are present; formatted with M/k suffixes.
+- **New Loan form** — "+ New Loan" button in BoardHeader opens a modal (display label, loan amount, lending entity select). `createLoan()` added to LoanService interface + MockLoanService. Provider gains `refreshLoans()`. Toast fires on creation. New loans land in stage-1.
+- **Toast notification system** — `ToastProvider` wraps the app; `useToast()` hook fires success/warning/info toasts (auto-dismiss 3s, bottom-right). Wired into "Mark as Sent" (success) and drag override (warning).
+
 ---
 
 ## Future work (next sessions)
 
 ### High priority
-- [ ] **Real-time loan card refresh after stage move** — after drag, the card's step progress still shows old stage steps until reload. Board should re-fetch step statuses for moved loan.
-- [ ] **Stage-8 (Completed) visual treatment** — loans in Completed stage could have a distinct muted column style vs active stages.
-- [ ] **LoanCard step progress for non-current stages** — after drag, the progress bar should update to reflect the new stage's steps.
 - [ ] **Collateral value / LTV on card** — show computed LTV from scorecard on the loan card (useful for quick board-level assessment).
 
 ### Medium priority
 - [ ] **Comment threading / reply** — add reply-to support on comments for better conversation tracking.
-- [ ] **Loan creation form** — simple "Add loan" form to create a new loan-1 entry (name, amount, property) that drops it into New Intake.
 - [ ] **Bulk actions** — select multiple loans, move to stage, assign owner.
-- [ ] **Stage-level metrics in column header** — total portfolio value per column, avg LTV, count.
 - [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry.
 - [ ] **Files view: folder completion indicator** — per-loan overall completion percentage across all categories.
 - [ ] **Payoff approval template body** — fill in the TODO placeholder in `messageTemplates.ts` once the team confirms the wording.
@@ -119,5 +122,4 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 - [ ] **Keyboard navigation** — arrow keys to move between loan cards, Enter to open detail.
 - [ ] **Export to CSV** — download loan portfolio as spreadsheet.
 - [ ] **Print / PDF view** — printable loan summary sheet.
-- [ ] **Notification system** — toast when a "Mark as Sent" action completes or a drag override is logged.
 - [ ] **Scorecard sidebar on board** — click a column header to see portfolio-level scorecard summary for all loans in that stage.
