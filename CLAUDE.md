@@ -111,16 +111,21 @@ Pure lib functions (no React, no service calls) live in `src/lib/`.
 ### Session 2026-05-29 (bulk selection)
 - **Bulk actions** — shift-click any loan card toggles it into/out of a bulk selection set (`selectedLoanIds: Set<string>` in Board). A fixed floating action bar slides up from the bottom when any loans are selected, showing a count, a "Move to stage" dropdown (all 8 stages), and a "Clear" button. On stage select, all selected loans are moved via `service.moveLoanToStage`, `stageOverrides` updated, selection cleared, and a success toast fires. Normal click (no shift) clears bulk selection and opens the detail panel as usual. Teal ring (`ring-2 ring-[#4bce97]/60`) on bulk-selected cards.
 
+### Session 2026-05-29 (print view + drag-to-upload mock)
+- **Print / PDF view** — "Print" button in BoardHeader (board view only, next to CSV). `PrintView` component (`src/components/board/PrintView.tsx`) is always in the DOM, hidden on screen, visible only via `@media print`. Print CSS in `src/styles/print.css` (imported in `main.tsx`): hides everything except `.print-view`, renders white background with a clean table of all loans (Display Label, Stage, Amount, LTV%, Interest Rate, Servicer, Closing Date, Funded Date). Clicking the Print button calls `window.print()`.
+- **Files view: drag-to-upload mock** — HTML5 drag-and-drop on category folder rows (loan node view) and on the category content table (category node view). `dragOverCategory` state highlights the hovered folder row with dashed blue border (`border-[#579dff]/60 bg-[#579dff]/5`). The category content area also shows a centered "Drop to add file" overlay when a file is dragged over it. On drop, calls `onAddMock(loanId, category)` with filename from `event.dataTransfer.files[0]?.name` and fires a success toast via `useToast()`. File bytes are ignored (mock only).
+
+### Session 2026-05-29 (portfolio bar, notification bell, dark/light toggle)
+- **Global portfolio summary bar** — `src/components/board/PortfolioBar.tsx` mounts between BoardHeader and the DndContext columns (board view only). Shows in one compact row: total loan count, total portfolio value ($XM), active loan count, avg LTV% (color-coded green/yellow/red), LTV>70% count (red if >0), and a mini per-stage dot+count breakdown for stages 1–7.
+- **Due-actions notification bell** — Bell icon button in BoardHeader (right side, before avatars). `dueActionsCount` and `dueActionItems` computed in Board.tsx via `dueActions()` from `src/lib/dates.ts` and passed as props. Red badge shows count when >0. Clicking opens a popover listing each loan's `displayLabel` + action reason string. Click-away closes it (useEffect on `document.mousedown`).
+- **Dark/light mode toggle** — `src/context/ThemeContext.tsx` provides `theme` + `toggleTheme()`. On mount reads from `localStorage`; on toggle sets `document.documentElement.classList.toggle('light')` and persists. `ThemeProvider` wraps `<App>` in `main.tsx`. Sun/moon SVG button in BoardHeader receives `theme` + `onToggleTheme` props from Board.tsx and App.tsx. Light-mode CSS overrides in `src/index.css` using `:root.light` selector.
+
 ---
 
 ## Future work (next sessions)
 
 ### Medium priority
-- [ ] **Files view: drag to upload mock** — drag a file onto a category folder to create a mock attachment entry (HTML5 drag events, no real upload).
-- [ ] **Print / PDF view** — `window.print()` with a print-specific CSS stylesheet; printable loan summary sheet showing all key fields, step statuses, comments.
 - [ ] **Payoff approval template body** — drafted placeholder exists; fill in final wording once team confirms.
 
 ### Nice to have
-- [ ] **Dark/light mode toggle** — currently dark-only. Would need a `theme` context and CSS variable swaps.
 - [ ] **LTV trend sparkline** — small chart on the loan card showing LTV change if the loan had prior valuations logged.
-- [ ] **Notification bell** — aggregate "actions due" count across all loans, surfaced in the header.

@@ -6,12 +6,14 @@ import { FilesView } from './components/files/FilesView';
 import { BoardHeader } from './components/board/BoardHeader';
 import { useSelectedLoan } from './context/LoanServiceProvider';
 import { ToastProvider } from './components/shared/Toast';
+import { useTheme } from './context/ThemeContext';
 import type { AppView } from './components/board/BoardHeader';
 
 // Inner component so we can use hooks after provider mounts
 function AppShell() {
   const [view, setView] = useState<AppView>('board');
   const { selectLoan } = useSelectedLoan();
+  const { theme, toggleTheme } = useTheme();
 
   const handleSwitchToBoard = useCallback((loanId?: string) => {
     setView('board');
@@ -31,6 +33,8 @@ function AppShell() {
             onZoomReset={() => {}}
             currentView={view}
             onViewChange={setView}
+            theme={theme}
+            onToggleTheme={toggleTheme}
           />
           <FilesView onSwitchToBoard={handleSwitchToBoard} />
         </div>
