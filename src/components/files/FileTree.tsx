@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FileTreeNode, FolderCounts } from '../../lib/fileTree';
+import { FOLDER_HIERARCHY, CATEGORY_LABEL } from '../../data/loanFolderCategories';
 
 interface FileTreeProps {
   nodes: FileTreeNode[];
@@ -102,6 +103,52 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
+function renderLoanChildren(
+  children: FileTreeNode[],
+  selectedId: string | null,
+  onSelect: (n: FileTreeNode) => void,
+  depth: number,
+) {
+  const indent = depth * 12;
+  const rows: React.ReactNode[] = [];
+
+  for (const group of FOLDER_HIERARCHY) {
+    const groupNodes = group.categories
+      .map(def => children.find(c => c.kind === 'category' && c.category === def.category))
+      .filter((c): c is FileTreeNode => c !== undefined);
+
+    if (groupNodes.length === 0) continue;
+
+    // Stage header — non-interactive label
+    rows.push(
+      <div
+        key={`header-${group.stageLabel}`}
+        className="text-[9px] uppercase tracking-widest font-semibold text-[#454f59] mt-2 mb-0.5"
+        style={{ paddingLeft: 8 + indent }}
+      >
+        {group.stageLabel}
+      </div>
+    );
+
+    for (const child of groupNodes) {
+      const displayName = child.kind === 'category'
+        ? (CATEGORY_LABEL[child.category] ?? child.name)
+        : child.name;
+      rows.push(
+        <TreeNodeRow
+          key={child.id}
+          node={{ ...child, name: displayName }}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          depth={depth}
+        />
+      );
+    }
+  }
+
+  return rows;
+}
+
 interface TreeNodeRowProps {
   node: FileTreeNode;
   selectedId: string | null;
@@ -170,15 +217,18 @@ function TreeNodeRow({ node, selectedId, onSelect, depth = 0 }: TreeNodeRowProps
 
       {open && hasChildren && (
         <div>
-          {node.children.map((child) => (
-            <TreeNodeRow
-              key={child.id}
-              node={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              depth={depth + 1}
-            />
-          ))}
+          {node.kind === 'loan'
+            ? renderLoanChildren(node.children, selectedId, onSelect, depth + 1)
+            : node.children.map((child) => (
+                <TreeNodeRow
+                  key={child.id}
+                  node={child}
+                  selectedId={selectedId}
+                  onSelect={onSelect}
+                  depth={depth + 1}
+                />
+              ))
+          }
         </div>
       )}
     </div>

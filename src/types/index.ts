@@ -7,13 +7,24 @@ export type StepStatus = 'done' | 'not_done' | 'na';
 export type AttachmentKind = 'ID' | 'Deed' | 'TermSheet' | 'Settlement' | 'Other';
 export type AttachmentStatus = 'requested' | 'received' | 'verified' | 'waived';
 export type AttachmentCategory =
-  | 'Underwriting'
-  | 'Loan Docs'
+  // Stage 1
+  | 'Loan Intake'
+  // Stage 2
+  | 'Processing / Underwriting'
+  // Stage 3 subfolders
   | 'Title'
-  | 'Final Loan Docs'
+  | 'Loan Documents'
+  // Stage 4 (covers 4-6) subfolders
   | 'NSC'
+  | 'Draws'
+  | 'Extensions'
   | 'Insurance'
-  | 'Draw';
+  | 'Tax'
+  // Stage 5 (was 7) subfolders
+  | 'Default / Foreclosure'
+  | 'Attorney Correspondence'
+  // Stage 6 (was 8)
+  | 'Complete / Paid Off';
 export type AttachmentFileType = 'pdf' | 'jpg' | 'png' | 'docx' | 'xlsx' | 'other';
 export type PaymentDueDay = 1 | 10 | 20;
 

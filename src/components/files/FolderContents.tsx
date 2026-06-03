@@ -2,17 +2,7 @@ import { useState } from 'react';
 import type { FileTreeNode } from '../../lib/fileTree';
 import type { AttachmentCategory } from '../../types';
 import { useToast } from '../shared/Toast';
-
-// Expected docs per category — shown as hints in empty folders
-const CATEGORY_HINTS: Record<string, string[]> = {
-  Underwriting: ['Government-Issued ID', 'Tri-Merge Credit Report', 'Personal Financial Statement', 'Bank Statements – Last 2 Months', 'Tax Returns', 'Entity Documents', 'Signing Authority', 'Appraisal', 'ACH Authorization'],
-  'Loan Docs':  ['Conditional Term Sheet', 'Secured Note', 'Deed of Trust / Mortgage', 'Loan Agreement', 'Personal Guaranty'],
-  Title:        ['Title Commitment / Report', 'Closing Protection Letter – CPL', 'E&O Dec Page', 'Wire Instructions'],
-  'Final Loan Docs': ['Recorded Deed of Trust', "Final Lender's Title Policy", 'Final Settlement Statement / ALTA-CD'],
-  NSC:          ['NSC Setup Form', 'Payoff Statement'],
-  Insurance:    ['Hazard / Fire Policy – APL as Mortgagee', 'Flood Insurance'],
-  Draw:         ['Draw Request', 'Inspection Report', 'Receipts / Proof of Funds', 'Permits'],
-};
+import { FOLDER_HIERARCHY, CATEGORY_EXPECTED_DOCS, CATEGORY_LABEL } from '../../data/loanFolderCategories';
 
 function fmtSize(bytes?: number) {
   if (!bytes) return '—';
@@ -75,12 +65,27 @@ function getLoanIdForNode(node: FileTreeNode, tree: FileTreeNode[]): string | nu
   return null;
 }
 
+function getStageLabel(category: AttachmentCategory): string {
+  for (const group of FOLDER_HIERARCHY) {
+    if (group.categories.some(c => c.category === category)) return group.stageLabel;
+  }
+  return '';
+}
+
 function getBreadcrumb(node: FileTreeNode, tree: FileTreeNode[]): string[] {
   if (node.kind === 'loan') return ['Loans', node.name];
   for (const loanNode of tree) {
     if (loanNode.kind !== 'loan') continue;
     for (const child of loanNode.children) {
-      if (child.id === node.id) return ['Loans', loanNode.name, node.name];
+      if (child.id === node.id && child.kind === 'category') {
+        const stageLabel = getStageLabel(child.category);
+        const catLabel = CATEGORY_LABEL[child.category] ?? child.name;
+        // Only show the extra stage crumb when the category label differs from the stage label
+        if (stageLabel && catLabel !== stageLabel) {
+          return ['Loans', loanNode.name, stageLabel, catLabel];
+        }
+        return ['Loans', loanNode.name, catLabel];
+      }
     }
   }
   return ['Loans', node.name];
@@ -107,7 +112,7 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
   const children   = node.children;
   const loanId     = getLoanIdForNode(node, tree);
   const category   = node.kind === 'category' ? node.category : null;
-  const hints      = category ? CATEGORY_HINTS[category] ?? [] : [];
+  const hints      = category ? (CATEGORY_EXPECTED_DOCS[category] ?? []) : [];
 
   // ── Drag helpers ──────────────────────────────────────────────────────────
 
@@ -165,41 +170,60 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
       {/* File list */}
       {children.length > 0 ? (
         <div className="flex-1 overflow-y-auto">
-          {/* Category sub-folders in loan view */}
+          {/* Category sub-folders in loan view — grouped under stage headers */}
           {node.kind === 'loan' && (
-            <div className="grid grid-cols-1 gap-1.5">
-              {children.map(child => {
-                if (child.kind !== 'category') return null;
-                const allVerified = child.counts.verified === child.counts.total && child.counts.total > 0;
-                const anyRequested = child.counts.requested > 0;
-                const dotColor = child.counts.total === 0 ? '#3d4b5c' : allVerified ? '#4bce97' : anyRequested ? '#f5cd47' : '#6cc3e0';
-                const isOver = dragOverCategory === child.category;
+            <div className="space-y-4">
+              {FOLDER_HIERARCHY.map(group => {
+                const groupCategories = group.categories
+                  .map(def => children.find(
+                    c => c.kind === 'category' && c.category === def.category
+                  ))
+                  .filter((c): c is FileTreeNode & { kind: 'category' } => c?.kind === 'category');
+
+                if (groupCategories.length === 0) return null;
+
                 return (
-                  <button
-                    key={child.id}
-                    onClick={() => onFileSelect(child)}
-                    onDragOver={(e) => handleRowDragOver(e, child.category)}
-                    onDragLeave={handleRowDragLeave}
-                    onDrop={loanId ? (e) => handleRowDrop(e, loanId, child.category) : undefined}
-                    className={`flex items-center gap-3 p-3 rounded-md border text-left transition-colors ${
-                      isOver
-                        ? 'bg-[#579dff]/5 border-dashed border-[#579dff]/60'
-                        : 'bg-[#282e33] hover:bg-[#2d3748] border-[#3d4b5c]'
-                    }`}
-                  >
-                    <svg viewBox="0 0 16 16" fill="none" className="w-5 h-5 text-[#579dff] flex-shrink-0">
-                      <path d="M1 4a1 1 0 011-1h4l1.5 1.5H14a1 1 0 011 1v6a1 1 0 01-1 1H2a1 1 0 01-1-1V4z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.1" />
-                    </svg>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#e8ecf0] truncate">{child.name}</p>
-                      <p className="text-xs text-[#7a8899]">{child.counts.total} file{child.counts.total !== 1 ? 's' : ''}</p>
+                  <div key={group.stageLabel}>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-[#5d6f7e] mb-1.5 px-0.5">
+                      {group.stageLabel}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {groupCategories.map(child => {
+                        const allVerified = child.counts.verified === child.counts.total && child.counts.total > 0;
+                        const anyRequested = child.counts.requested > 0;
+                        const dotColor = child.counts.total === 0 ? '#3d4b5c' : allVerified ? '#4bce97' : anyRequested ? '#f5cd47' : '#6cc3e0';
+                        const isOver = dragOverCategory === child.category;
+                        const displayLabel = CATEGORY_LABEL[child.category] ?? child.name;
+                        return (
+                          <button
+                            key={child.id}
+                            onClick={() => onFileSelect(child)}
+                            onDragOver={(e) => handleRowDragOver(e, child.category)}
+                            onDragLeave={handleRowDragLeave}
+                            onDrop={loanId ? (e) => handleRowDrop(e, loanId, child.category) : undefined}
+                            className={`flex items-center gap-3 p-3 rounded-md border text-left transition-colors ${
+                              isOver
+                                ? 'bg-[#579dff]/5 border-dashed border-[#579dff]/60'
+                                : 'bg-[#282e33] hover:bg-[#2d3748] border-[#3d4b5c]'
+                            }`}
+                          >
+                            <svg viewBox="0 0 16 16" fill="none" className="w-5 h-5 text-[#579dff] flex-shrink-0">
+                              <path d="M1 4a1 1 0 011-1h4l1.5 1.5H14a1 1 0 011 1v6a1 1 0 01-1 1H2a1 1 0 01-1-1V4z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.1" />
+                            </svg>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#e8ecf0] truncate">{displayLabel}</p>
+                              <p className="text-xs text-[#7a8899]">{child.counts.total} file{child.counts.total !== 1 ? 's' : ''}</p>
+                            </div>
+                            {isOver && (
+                              <span className="text-xs text-[#579dff] flex-shrink-0 font-medium">Drop to add</span>
+                            )}
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
+                            <span className="text-xs text-[#7a8899] flex-shrink-0">{child.counts.verified}/{child.counts.total}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    {isOver && (
-                      <span className="text-xs text-[#579dff] flex-shrink-0 font-medium">Drop to add</span>
-                    )}
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
-                    <span className="text-xs text-[#7a8899] flex-shrink-0">{child.counts.verified}/{child.counts.total}</span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
