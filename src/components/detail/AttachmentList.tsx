@@ -6,6 +6,7 @@ interface AttachmentListProps {
 }
 
 const STATUS_STYLES: Record<Attachment['status'], string> = {
+  not_yet_requested: 'bg-[#22272b] text-[#454f59] border border-[#3d4b5c]',
   requested: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40',
   received:  'bg-blue-500/20  text-blue-300  border border-blue-500/40',
   verified:  'bg-green-500/20 text-green-300  border border-green-500/40',
@@ -13,6 +14,7 @@ const STATUS_STYLES: Record<Attachment['status'], string> = {
 };
 
 const STATUS_LABELS: Record<Attachment['status'], string> = {
+  not_yet_requested: 'Not Yet Requested',
   requested: 'Requested',
   received:  'Received',
   verified:  'Verified',

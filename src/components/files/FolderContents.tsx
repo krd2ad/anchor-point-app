@@ -17,9 +17,10 @@ function fmtDate(iso?: string) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  verified:  'bg-green-500/20 text-green-400',
-  received:  'bg-blue-500/20 text-blue-400',
+  not_yet_requested: 'bg-[#22272b] text-[#454f59]',
   requested: 'bg-yellow-500/20 text-yellow-400',
+  received:  'bg-blue-500/20 text-blue-400',
+  verified:  'bg-green-500/20 text-green-400',
   waived:    'bg-[#3d4b5c] text-[#7a8899]',
 };
 
@@ -167,6 +168,17 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
         ))}
       </div>
 
+      {/* Add file button — shown when inside a category folder */}
+      {loanId && category && (
+        <button
+          onClick={() => onAddMock(loanId, category)}
+          className="flex items-center gap-2 text-xs text-[#7a8899] hover:text-[#b6c2cf] border border-dashed border-[#3d4b5c] hover:border-[#579dff]/40 rounded-md px-3 py-2 transition-colors w-full justify-center mb-4"
+        >
+          <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          Add file (mock demo)
+        </button>
+      )}
+
       {/* File list */}
       {children.length > 0 ? (
         <div className="flex-1 overflow-y-auto">
@@ -270,20 +282,20 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
                       <tr
                         key={child.id}
                         onClick={() => onFileSelect(child)}
-                        className="border-b border-[#2d3748] hover:bg-[#282e33] cursor-pointer transition-colors"
+                        className={`border-b border-[#2d3748] hover:bg-[#282e33] cursor-pointer transition-colors ${att.status === 'not_yet_requested' ? 'opacity-50' : ''}`}
                       >
                         <td className="py-2.5 pr-4">
                           <div className="flex items-center gap-2">
                             <FileTypeIcon fileType={att.fileType} />
                             <div className="min-w-0">
-                              <p className="text-[#e8ecf0] truncate font-medium text-xs">{att.name}</p>
+                              <p className={`truncate font-medium text-xs ${att.status === 'not_yet_requested' ? 'text-[#5d6f7e] italic' : 'text-[#e8ecf0]'}`}>{att.name}</p>
                               <p className="text-[#7a8899] text-[10px] uppercase">{att.fileType}</p>
                             </div>
                           </div>
                         </td>
                         <td className="py-2.5 pr-4">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded ${STATUS_STYLES[att.status] ?? ''}`}>
-                            {att.status.charAt(0).toUpperCase() + att.status.slice(1)}
+                            {att.status === 'not_yet_requested' ? 'Not Yet Requested' : att.status.charAt(0).toUpperCase() + att.status.slice(1)}
                           </span>
                         </td>
                         <td className="py-2.5 pr-4 text-xs text-[#7a8899] whitespace-nowrap">{fmtSize(att.sizeBytes)}</td>
@@ -314,20 +326,6 @@ export function FolderContents({ node, tree, onFileSelect, onAddMock }: FolderCo
         </div>
       )}
 
-      {/* Add mock button */}
-      {loanId && category && (
-        <div className="mt-4 pt-4 border-t border-[#3d4b5c]">
-          <button
-            onClick={() => {
-              onAddMock(loanId, category);
-            }}
-            className="flex items-center gap-2 text-xs text-[#7a8899] hover:text-[#b6c2cf] border border-dashed border-[#3d4b5c] hover:border-[#579dff]/40 rounded-md px-3 py-2 transition-colors w-full justify-center"
-          >
-            <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3"><path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-            Add file (mock demo)
-          </button>
-        </div>
-      )}
     </div>
   );
 }

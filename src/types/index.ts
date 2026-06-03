@@ -5,7 +5,7 @@ export type BorrowerEntityType = 'LLC' | 'Individual' | 'Corp' | 'Trust';
 export type PropertyType = 'Land' | 'SFR' | 'Commercial' | 'Other';
 export type StepStatus = 'done' | 'not_done' | 'na';
 export type AttachmentKind = 'ID' | 'Deed' | 'TermSheet' | 'Settlement' | 'Other';
-export type AttachmentStatus = 'requested' | 'received' | 'verified' | 'waived';
+export type AttachmentStatus = 'not_yet_requested' | 'requested' | 'received' | 'verified' | 'waived';
 export type AttachmentCategory =
   // Stage 1
   | 'Loan Intake'

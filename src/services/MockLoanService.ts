@@ -20,6 +20,7 @@ import type {
 } from '../types';
 import { STAGES } from '../data/stages';
 import { STAGE_STEPS } from '../data/stageSteps';
+import { CATEGORY_EXPECTED_DOCS, LOAN_FOLDER_CATEGORIES } from '../data/loanFolderCategories';
 import { MESSAGE_TEMPLATES } from '../data/messageTemplates';
 import { EXTERNAL_PARTIES } from '../data/externalParties';
 import { buildScorecard, scorecardInputsForLoan } from '../lib/underwriting';
@@ -121,7 +122,10 @@ export class MockLoanService implements LoanService {
 
     const stepStatuses = [...(this.stepStatusesByLoan.get(loanId)?.values() ?? [])];
     const comments     = [...this.comments.values()].filter(c => c.loanId === loanId);
-    const attachments  = [...this.attachments.values()].filter(a => a.loanId === loanId);
+    const attachments = this.withShells(
+      loanId,
+      [...this.attachments.values()].filter(a => a.loanId === loanId),
+    );
 
     return Promise.resolve({ loan, borrowerEntity, principal, parcels, stepStatuses, comments, attachments });
   }
@@ -291,9 +295,29 @@ export class MockLoanService implements LoanService {
   }
 
   async getAttachmentsForLoan(loanId: string): Promise<Attachment[]> {
-    return Promise.resolve(
-      [...this.attachments.values()].filter(a => a.loanId === loanId)
-    );
+    const real = [...this.attachments.values()].filter(a => a.loanId === loanId);
+    return Promise.resolve(this.withShells(loanId, real));
+  }
+
+  private withShells(loanId: string, real: Attachment[]): Attachment[] {
+    const existingNames = new Set(real.map(a => `${a.category}::${a.name}`));
+    const shells: Attachment[] = [];
+    for (const category of LOAN_FOLDER_CATEGORIES) {
+      for (const docName of CATEGORY_EXPECTED_DOCS[category] ?? []) {
+        if (!existingNames.has(`${category}::${docName}`)) {
+          shells.push({
+            id: `shell-${loanId}-${category}-${docName}`.replace(/\s+/g, '-').toLowerCase(),
+            loanId,
+            name: docName,
+            kind: 'Other',
+            status: 'not_yet_requested',
+            category,
+            fileType: 'pdf',
+          });
+        }
+      }
+    }
+    return [...real, ...shells];
   }
 
   async getStageHistory(loanId: string): Promise<StageChangeEvent[]> {

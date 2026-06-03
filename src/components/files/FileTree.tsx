@@ -237,12 +237,14 @@ function TreeNodeRow({ node, selectedId, onSelect, depth = 0 }: TreeNodeRowProps
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    verified:  'bg-green-500/20 text-green-400',
-    received:  'bg-blue-500/20 text-blue-400',
+    not_yet_requested: 'bg-[#22272b] text-[#454f59]',
     requested: 'bg-yellow-500/20 text-yellow-400',
+    received:  'bg-blue-500/20 text-blue-400',
+    verified:  'bg-green-500/20 text-green-400',
     waived:    'bg-[#3d4b5c] text-[#7a8899]',
   };
   const labels: Record<string, string> = {
+    not_yet_requested: 'Not Requested',
     verified:  'Verified',
     received:  'Received',
     requested: 'Requested',
