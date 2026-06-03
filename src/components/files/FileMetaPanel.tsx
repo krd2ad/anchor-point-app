@@ -2,9 +2,10 @@ import type { FileTreeNode } from '../../lib/fileTree';
 import type { Attachment } from '../../types';
 
 const STATUS_STYLES: Record<string, string> = {
-  verified:  'bg-green-500/20 text-green-400 border-green-500/30',
-  received:  'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  not_yet_requested: 'bg-[#22272b] text-[#454f59] border-[#3d4b5c]',
   requested: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  received:  'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  verified:  'bg-green-500/20 text-green-400 border-green-500/30',
   waived:    'bg-[#3d4b5c] text-[#7a8899] border-[#3d4b5c]',
 };
 
@@ -113,7 +114,7 @@ export function FileMetaPanel({ node, tree, onClose, onViewInBoard }: FileMetaPa
         {/* Status */}
         <div>
           <span className={`text-xs font-medium px-2 py-0.5 rounded border ${STATUS_STYLES[att.status] ?? ''}`}>
-            {att.status.charAt(0).toUpperCase() + att.status.slice(1)}
+            {att.status === 'not_yet_requested' ? 'Not Yet Requested' : att.status.charAt(0).toUpperCase() + att.status.slice(1)}
           </span>
         </div>
 
