@@ -300,6 +300,12 @@ export class MockLoanService implements LoanService {
     return Promise.resolve(all);
   }
 
+  async updateAttachmentStatus(attachment: Attachment, status: import('../types').AttachmentStatus): Promise<Attachment> {
+    const updated = { ...attachment, status };
+    this.attachments.set(attachment.id, updated);
+    return Promise.resolve(updated);
+  }
+
   async getAttachmentsForLoan(loanId: string): Promise<Attachment[]> {
     const real = [...this.attachments.values()].filter(a => a.loanId === loanId);
     return Promise.resolve(this.withShells(loanId, real));

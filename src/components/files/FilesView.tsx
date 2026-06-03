@@ -13,7 +13,7 @@ interface FilesViewProps {
 
 export function FilesView({ onSwitchToBoard }: FilesViewProps) {
   const fileTreeState = useFileTree();
-  const { tree, loading, showEmptyCategories, setShowEmptyCategories, addMockAttachment } = fileTreeState;
+  const { tree, loading, showEmptyCategories, setShowEmptyCategories, addMockAttachment, updateAttachmentStatus } = fileTreeState;
 
   const [selectedNode, setSelectedNode] = useState<FileTreeNode | null>(null);
   const [fileNode, setFileNode] = useState<FileTreeNode | null>(null);
@@ -163,6 +163,12 @@ export function FilesView({ onSwitchToBoard }: FilesViewProps) {
               tree={tree}
               onClose={handleCloseFileMeta}
               onViewInBoard={handleViewInBoard}
+              onStatusChange={async (attachment, status) => {
+                const updated = await updateAttachmentStatus(attachment, status);
+                setFileNode(prev =>
+                  prev?.kind === 'file' ? { ...prev, attachment: updated } : prev
+                );
+              }}
             />
           )}
         </div>

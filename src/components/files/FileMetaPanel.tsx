@@ -1,5 +1,5 @@
 import type { FileTreeNode } from '../../lib/fileTree';
-import type { Attachment } from '../../types';
+import type { AttachmentStatus, Attachment } from '../../types';
 
 const STATUS_STYLES: Record<string, string> = {
   not_yet_requested: 'bg-[#22272b] text-[#454f59] border-[#3d4b5c]',
@@ -64,14 +64,23 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+const ALL_STATUSES: { value: AttachmentStatus; label: string }[] = [
+  { value: 'not_yet_requested', label: 'Not Yet Requested' },
+  { value: 'requested',         label: 'Requested' },
+  { value: 'received',          label: 'Received' },
+  { value: 'verified',          label: 'Verified' },
+  { value: 'waived',            label: 'Waived' },
+];
+
 interface FileMetaPanelProps {
   node: FileTreeNode & { kind: 'file' };
   tree: FileTreeNode[];
   onClose: () => void;
   onViewInBoard: (loanId: string) => void;
+  onStatusChange?: (attachment: Attachment, status: AttachmentStatus) => Promise<void>;
 }
 
-export function FileMetaPanel({ node, tree, onClose, onViewInBoard }: FileMetaPanelProps) {
+export function FileMetaPanel({ node, tree, onClose, onViewInBoard, onStatusChange }: FileMetaPanelProps) {
   const att = node.attachment;
 
   // Find parent loan
@@ -111,11 +120,40 @@ export function FileMetaPanel({ node, tree, onClose, onViewInBoard }: FileMetaPa
         {/* Mock preview */}
         <MockPreview att={att} />
 
-        {/* Status */}
+        {/* Status selector */}
         <div>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded border ${STATUS_STYLES[att.status] ?? ''}`}>
-            {att.status === 'not_yet_requested' ? 'Not Yet Requested' : att.status.charAt(0).toUpperCase() + att.status.slice(1)}
-          </span>
+          <p className="text-[10px] uppercase tracking-wider text-[#7a8899] mb-2">Status</p>
+          <div className="flex flex-col gap-1">
+            {ALL_STATUSES.map(({ value, label }) => {
+              const active = att.status === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => onStatusChange?.(att, value)}
+                  disabled={active}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium text-left transition-colors ${
+                    active
+                      ? `${STATUS_STYLES[value]} cursor-default`
+                      : 'text-[#7a8899] hover:bg-[#2d3748] hover:text-[#b6c2cf]'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${active ? 'opacity-100' : 'opacity-30'} ${
+                    value === 'verified'          ? 'bg-green-400' :
+                    value === 'received'          ? 'bg-blue-400'  :
+                    value === 'requested'         ? 'bg-yellow-400':
+                    value === 'waived'            ? 'bg-[#7a8899]' :
+                                                   'bg-[#454f59]'
+                  }`} />
+                  {label}
+                  {active && (
+                    <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3 ml-auto text-current opacity-70">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Metadata grid */}

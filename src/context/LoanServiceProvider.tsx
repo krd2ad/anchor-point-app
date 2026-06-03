@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { LoanService } from '../services/LoanService';
-import type { Loan, MessageTemplate, ExternalParty, UnderwritingScorecard, Attachment } from '../types';
+import type { Loan, MessageTemplate, ExternalParty, UnderwritingScorecard, Attachment, AttachmentStatus } from '../types';
 import { MockLoanService } from '../services/MockLoanService';
 import { buildFileTree, type FileTreeNode } from '../lib/fileTree';
 
@@ -131,6 +131,7 @@ export interface FileTreeState {
   setShowEmptyCategories: (v: boolean) => void;
   attachments: Attachment[];
   addMockAttachment: (attachment: Attachment) => void;
+  updateAttachmentStatus: (attachment: Attachment, status: AttachmentStatus) => Promise<Attachment>;
 }
 
 export function useFileTree(options?: { showEmptyCategories?: boolean }): FileTreeState {
@@ -154,6 +155,16 @@ export function useFileTree(options?: { showEmptyCategories?: boolean }): FileTr
     setAttachments(prev => [...prev, attachment]);
   }, []);
 
+  const updateAttachmentStatus = useCallback(async (attachment: Attachment, status: AttachmentStatus): Promise<Attachment> => {
+    const updated = await service.updateAttachmentStatus(attachment, status);
+    setAttachments(prev => {
+      const exists = prev.some(a => a.id === attachment.id);
+      if (exists) return prev.map(a => a.id === attachment.id ? updated : a);
+      return [...prev, updated];
+    });
+    return updated;
+  }, [service]);
+
   const tree = useMemo(
     () =>
       loansLoading || attachmentsLoading
@@ -169,5 +180,6 @@ export function useFileTree(options?: { showEmptyCategories?: boolean }): FileTr
     setShowEmptyCategories,
     attachments,
     addMockAttachment,
+    updateAttachmentStatus,
   };
 }
