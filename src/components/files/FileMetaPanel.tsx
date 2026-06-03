@@ -20,9 +20,6 @@ function fmtDate(iso?: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function getLoanFromTree(loanId: string, tree: FileTreeNode[]) {
-  return tree.find(n => n.kind === 'loan' && n.loanId === loanId);
-}
 
 function MockPreview({ att }: { att: Attachment }) {
   const isImage = att.fileType === 'jpg' || att.fileType === 'png';

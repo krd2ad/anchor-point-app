@@ -31,6 +31,7 @@ interface BoardHeaderProps {
   onToggleTheme?: () => void;
   onOpenCommandPalette?: () => void;
   onShowShortcuts?: () => void;
+  onLogout?: () => void;
 }
 
 export function BoardHeader({
@@ -49,6 +50,7 @@ export function BoardHeader({
   onToggleTheme,
   onOpenCommandPalette,
   onShowShortcuts,
+  onLogout,
 }: BoardHeaderProps) {
   const pct = Math.round(zoom * 100);
   const [bellOpen, setBellOpen] = useState(false);
@@ -279,6 +281,22 @@ export function BoardHeader({
             </div>
           ))}
         </div>
+
+        {/* Logout */}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Sign out"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#7a8899] hover:text-[#f87168] border border-[#3d4b5c] hover:border-[#f87168]/40 rounded-md transition-colors ml-1"
+          >
+            <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5">
+              <path d="M5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M9.5 10l2.5-3-2.5-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 7H5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Sign out
+          </button>
+        )}
       </div>
     </header>
   );

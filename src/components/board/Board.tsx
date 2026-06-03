@@ -114,9 +114,10 @@ const CRITICAL_STEP_IDS = new Set(
 interface BoardProps {
   currentView: AppView;
   onViewChange: (view: AppView) => void;
+  onLogout?: () => void;
 }
 
-export function Board({ currentView, onViewChange }: BoardProps) {
+export function Board({ currentView, onViewChange, onLogout }: BoardProps) {
   const { loans, loading, refreshLoans } = useLoans();
   const { selectedLoanId, selectLoan, clearSelection } = useSelectedLoan();
   const service = useLoanService();
@@ -438,6 +439,7 @@ export function Board({ currentView, onViewChange }: BoardProps) {
             onToggleTheme={toggleTheme}
             onOpenCommandPalette={openCommandPalette}
             onShowShortcuts={() => setShowShortcuts(true)}
+            onLogout={onLogout}
           />
 
           {currentView === 'board' && (

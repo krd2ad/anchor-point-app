@@ -95,23 +95,6 @@ export function FilesView({ onSwitchToBoard }: FilesViewProps) {
     { total: 0, verified: 0, received: 0, requested: 0 },
   );
 
-  // Determine current loanId for "add mock"
-  function getLoanIdFromNode(node: FileTreeNode | null): string | null {
-    if (!node) return null;
-    if (node.kind === 'loan') return node.loanId;
-    if (node.kind === 'category') {
-      // Find the loan in tree that contains this category
-      for (const loanNode of tree) {
-        if (loanNode.kind === 'loan') {
-          for (const child of loanNode.children) {
-            if (child.id === node.id) return loanNode.loanId;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   function handleAddMock(loanId: string, category: string) {
     const newAtt = {
       id: nanoid(),

@@ -1,4 +1,4 @@
-import { useLoans, useSelectedLoan, useFileTree } from '../../context/LoanServiceProvider';
+import { useLoans, useFileTree } from '../../context/LoanServiceProvider';
 import { STAGES } from '../../data/stages';
 import { loanRiskScore, type RiskLevel } from '../../lib/riskScore';
 import type { Loan } from '../../types';

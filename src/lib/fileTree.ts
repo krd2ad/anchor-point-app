@@ -1,4 +1,4 @@
-import type { Loan, Attachment } from '../types';
+import type { Loan, Attachment, AttachmentCategory } from '../types';
 import { LOAN_FOLDER_CATEGORIES } from '../data/loanFolderCategories';
 import { STAGES } from '../data/stages';
 
@@ -26,7 +26,7 @@ export type FileTreeNode =
       kind: 'category';
       id: string;
       name: string;
-      category: string;
+      category: AttachmentCategory;
       children: FileTreeNode[];
       counts: FolderCounts;
     }

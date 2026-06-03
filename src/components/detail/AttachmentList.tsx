@@ -97,7 +97,7 @@ export function AttachmentList({ attachments, onOpenInFiles }: AttachmentListPro
   );
 }
 
-function AttachmentRow({ att, showCategory }: { att: Attachment; showCategory: boolean }) {
+function AttachmentRow({ att }: { att: Attachment; showCategory?: boolean }) {
   return (
     <li className="flex items-center gap-2 text-sm text-[#b6c2cf]">
       <FileIcon fileType={att.fileType} />

@@ -10,6 +10,8 @@ import { ToastProvider } from './components/shared/Toast';
 import { useTheme } from './context/ThemeContext';
 import { useCommandPalette } from './context/CommandPaletteContext';
 import { CommandPalette } from './components/shared/CommandPalette';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './components/auth/LoginPage';
 import type { AppView } from './components/board/BoardHeader';
 
 // Inner component so we can use hooks after provider mounts
@@ -18,6 +20,7 @@ function AppShell() {
   const { selectLoan } = useSelectedLoan();
   const { theme, toggleTheme } = useTheme();
   const { open: openPalette } = useCommandPalette();
+  const { logout } = useAuth();
 
   const handleSwitchToBoard = useCallback((loanId?: string) => {
     setView('board');
@@ -45,7 +48,7 @@ function AppShell() {
   return (
     <>
       {view === 'board' ? (
-        <Board currentView={view} onViewChange={setView} />
+        <Board currentView={view} onViewChange={setView} onLogout={logout} />
       ) : (
         <div className="min-h-screen bg-[#1d2125] flex flex-col">
           <BoardHeader
@@ -57,6 +60,7 @@ function AppShell() {
             onViewChange={setView}
             theme={theme}
             onToggleTheme={toggleTheme}
+            onLogout={logout}
           />
           {view === 'files'     && <FilesView onSwitchToBoard={handleSwitchToBoard} />}
           {view === 'analytics' && <AnalyticsView onSelectLoanAndSwitchToBoard={handleNavigateToLoan} />}
@@ -68,12 +72,22 @@ function AppShell() {
   );
 }
 
-export default function App() {
+function AuthGate() {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <LoginPage />;
   return (
     <LoanServiceProvider>
       <ToastProvider>
         <AppShell />
       </ToastProvider>
     </LoanServiceProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }

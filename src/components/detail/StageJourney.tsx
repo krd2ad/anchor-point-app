@@ -29,8 +29,6 @@ export function StageJourney({ loan, stageHistory }: StageJourneyProps) {
         {STAGES.map((stage) => {
           const isPast = stage.order < currentOrder || visitedStageIds.has(stage.id);
           const isCurrent = stage.id === loan.stageId;
-          const isFuture = stage.order > currentOrder && !visitedStageIds.has(stage.id);
-
           let bgColor: string;
           if (isCurrent) {
             bgColor = stage.color;
