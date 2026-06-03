@@ -291,7 +291,13 @@ export class MockLoanService implements LoanService {
   }
 
   async getAllAttachments(): Promise<Attachment[]> {
-    return Promise.resolve([...this.attachments.values()]);
+    const loanIds = [...this.loans.keys()];
+    const all: Attachment[] = [];
+    for (const loanId of loanIds) {
+      const real = [...this.attachments.values()].filter(a => a.loanId === loanId);
+      all.push(...this.withShells(loanId, real));
+    }
+    return Promise.resolve(all);
   }
 
   async getAttachmentsForLoan(loanId: string): Promise<Attachment[]> {
