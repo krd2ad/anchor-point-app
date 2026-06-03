@@ -21,6 +21,11 @@ function fmtDate(iso?: string) {
 }
 
 
+// TODO: use to navigate from file metadata back to the parent loan node
+// function getLoanFromTree(loanId: string, tree: FileTreeNode[]) {
+//   return tree.find(n => n.kind === 'loan' && n.loanId === loanId);
+// }
+
 function MockPreview({ att }: { att: Attachment }) {
   const isImage = att.fileType === 'jpg' || att.fileType === 'png';
 

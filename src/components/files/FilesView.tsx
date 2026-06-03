@@ -95,6 +95,22 @@ export function FilesView({ onSwitchToBoard }: FilesViewProps) {
     { total: 0, verified: 0, received: 0, requested: 0 },
   );
 
+  // TODO: use to resolve loanId when selectedNode is a category node (e.g. for "add mock" or breadcrumb nav)
+  // function getLoanIdFromNode(node: FileTreeNode | null): string | null {
+  //   if (!node) return null;
+  //   if (node.kind === 'loan') return node.loanId;
+  //   if (node.kind === 'category') {
+  //     for (const loanNode of tree) {
+  //       if (loanNode.kind === 'loan') {
+  //         for (const child of loanNode.children) {
+  //           if (child.id === node.id) return loanNode.loanId;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return null;
+  // }
+
   function handleAddMock(loanId: string, category: string) {
     const newAtt = {
       id: nanoid(),
